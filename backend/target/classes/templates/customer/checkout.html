@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Secure Checkout')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/layout :: sidebar('cart', 'Customer')}"></div>
+
+<main class="flex-1 pt-[130px] pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto w-full">
+    <div class="flex justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+        <div>
+            <h1 class="text-3xl font-light tracking-tight uppercase">Secure Checkout</h1>
+            <p class="text-gray-500 text-sm mt-1 tracking-widest uppercase"
+               th:text="${directCheckout == true ? 'Direct purchase for your selected item' : 'Review your order before payment'}">
+                Direct purchase for your selected item
+            </p>
+        </div>
+        <a th:href="@{/customer/shop}" class="text-xs font-semibold tracking-widest uppercase text-accent-primary hover:text-accent-primaryHover transition-colors border-b border-transparent hover:border-accent-primaryHover pb-1">
+            <i class="bi bi-arrow-left me-1"></i> Continue Shopping
+        </a>
+    </div>
+
+    <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-100/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-exclamation-octagon me-2 text-lg"></i> <span th:text="${error}"></span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <section class="lg:col-span-3 bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden">
+            <div class="p-6 border-b border-black/5 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
+                <h2 class="text-lg font-bold uppercase tracking-widest flex items-center gap-2">
+                    <i class="bi bi-box-seam text-accent-primary"></i> Order Items
+                </h2>
+            </div>
+
+            <div class="divide-y divide-black/5 dark:divide-white/5">
+                <div th:each="item : ${checkoutItems}" class="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center overflow-hidden">
+                            <i class="bi bi-box-seam text-2xl text-gray-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-light-text dark:text-white uppercase tracking-wider" th:text="${item.product.name}">Product</h3>
+                            <p class="text-xs text-gray-500 uppercase tracking-widest mt-1" th:text="${item.product.colour + ' | Size: ' + item.product.size}">Color | Size</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Quantity: <span class="font-semibold text-light-text dark:text-white" th:text="${item.quantity}">1</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-left md:text-right">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest">Line Total</p>
+                        <p class="text-lg font-bold text-light-text dark:text-white" th:text="${'LKR ' + (item.unitPrice * item.quantity)}">LKR 0.00</p>
+                        <p class="text-xs text-gray-500 mt-1" th:text="${'LKR ' + item.unitPrice + ' each'}">LKR 0.00 each</p>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(checkoutItems)}" class="p-16 text-center text-gray-500">
+                    <i class="bi bi-bag-x text-5xl mb-4 opacity-50"></i>
+                    <p class="text-sm uppercase tracking-widest">No items available for checkout.</p>
+                </div>
+            </div>
+        </section>
+
+        <aside class="lg:col-span-2 bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none p-6 md:p-8 sticky top-[150px] h-fit">
+            <h4 class="text-lg font-bold uppercase tracking-widest border-b border-black/10 dark:border-white/10 pb-4 mb-6 text-light-text dark:text-white flex items-center">
+                <i class="bi bi-receipt me-3 text-accent-primary"></i> Payment Details
+            </h4>
+
+            <div class="space-y-4 mb-6 text-sm">
+                <div class="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                    <span class="tracking-wider">Subtotal</span>
+                    <span class="font-medium text-light-text dark:text-white" th:text="${'LKR ' + total}">LKR 0.00</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                    <span class="tracking-wider">Shipping</span>
+                    <span class="font-medium text-status-success uppercase text-xs tracking-widest bg-status-success/10 px-2 py-1 rounded">Free</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                    <span class="tracking-wider">Tax</span>
+                    <span class="font-medium text-light-text dark:text-white">Included</span>
+                </div>
+            </div>
+
+            <div class="border-t border-black/10 dark:border-white/10 pt-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-light uppercase tracking-widest text-light-text dark:text-white">Total</span>
+                    <span class="text-2xl font-bold text-accent-primary" th:text="${'LKR ' + total}">LKR 0.00</span>
+                </div>
+            </div>
+
+            <form th:action="@{/customer/checkout}" method="post" class="space-y-6">
+                <input type="hidden" name="directCheckout" th:value="${directCheckout == true}">
+
+                <div>
+                    <label class="block text-xs font-bold tracking-widest uppercase text-light-text dark:text-white mb-3">Choose Payment Method</label>
+                    <div class="space-y-3">
+                        <label id="payCardLabel" class="relative flex items-start p-4 rounded-2xl border-2 cursor-pointer transition-all border-accent-primary bg-accent-primary/5 hover:border-accent-primary">
+                            <input type="radio" name="paymentMethod" value="Credit / Debit Card" checked class="mt-1 me-3 text-accent-primary focus:ring-accent-primary" onchange="selectPaymentMethod('card')">
+                            <div>
+                                <span class="block text-sm font-bold text-light-text dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="bi bi-credit-card-2-front text-elegant-highlight text-base"></i> Credit / Debit Card
+                                </span>
+                                <span class="block text-[11px] text-gray-500 mt-1">Visa, MasterCard, AMEX Instant Online</span>
+                            </div>
+                        </label>
+
+                        <label id="payCodLabel" class="relative flex items-start p-4 rounded-2xl border-2 border-black/10 dark:border-white/10 cursor-pointer transition-all hover:border-accent-primary">
+                            <input type="radio" name="paymentMethod" value="Cash on Delivery (COD)" class="mt-1 me-3 text-accent-primary focus:ring-accent-primary" onchange="selectPaymentMethod('cod')">
+                            <div>
+                                <span class="block text-sm font-bold text-light-text dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="bi bi-cash-stack text-elegant-highlight text-base"></i> Cash on Delivery
+                                </span>
+                                <span class="block text-[11px] text-gray-500 mt-1">Pay with cash upon door delivery</span>
+                            </div>
+                        </label>
+
+                        <label id="payKokoLabel" class="relative flex items-start p-4 rounded-2xl border-2 border-black/10 dark:border-white/10 cursor-pointer transition-all hover:border-accent-primary">
+                            <input type="radio" name="paymentMethod" value="KOKO Installments (3x)" class="mt-1 me-3 text-accent-primary focus:ring-accent-primary" onchange="selectPaymentMethod('koko')">
+                            <div>
+                                <span class="block text-sm font-bold text-light-text dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="bi bi-lightning-charge-fill text-elegant-highlight text-base"></i> KOKO / Mintpay 3x
+                                </span>
+                                <span class="block text-[11px] text-gray-500 mt-1">Pay in 3 interest-free monthly installments</span>
+                            </div>
+                        </label>
+
+                        <label id="payBankLabel" class="relative flex items-start p-4 rounded-2xl border-2 border-black/10 dark:border-white/10 cursor-pointer transition-all hover:border-accent-primary">
+                            <input type="radio" name="paymentMethod" value="Direct Bank Transfer" class="mt-1 me-3 text-accent-primary focus:ring-accent-primary" onchange="selectPaymentMethod('bank')">
+                            <div>
+                                <span class="block text-sm font-bold text-light-text dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="bi bi-bank text-elegant-highlight text-base"></i> Bank Transfer / QR
+                                </span>
+                                <span class="block text-[11px] text-gray-500 mt-1">Direct deposit via Sampath / Commercial</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="cardDetailsBox" class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-black/10 dark:border-white/10 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Card Payment Verification</span>
+                        <div class="flex gap-1 text-lg">
+                            <i class="bi bi-credit-card text-elegant-highlight"></i>
+                            <i class="bi bi-credit-card-2-back text-elegant-highlight"></i>
+                        </div>
+                    </div>
+                    <input type="text" name="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric" autocomplete="cc-number" title="Enter a valid 16-digit card number" class="w-full bg-white dark:bg-black/30 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white font-mono tracking-wider">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" name="cardExpiry" placeholder="MM / YY" pattern="(0[1-9]|1[0-2])\/\d{2}" maxlength="5" inputmode="numeric" autocomplete="cc-exp" title="Enter expiry in MM/YY format" class="bg-white dark:bg-black/30 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white">
+                        <input type="text" name="cardCvv" placeholder="CVC" pattern="\d{3}" maxlength="3" inputmode="numeric" autocomplete="cc-csc" title="Enter a valid 3-digit CVV number" class="bg-white dark:bg-black/30 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white">
+                    </div>
+                </div>
+
+                <div id="kokoDetailsBox" class="p-4 bg-elegant-highlight rounded-2xl border border-amber-500/20 space-y-2" style="display: none;">
+                    <span class="block text-xs font-bold uppercase tracking-wider text-elegant-highlight">Koko 3x Installments</span>
+                    <p class="text-xs text-gray-500 leading-relaxed">
+                        Split your order total into 3 interest-free monthly payments. 
+                        First payment of <span class="font-bold text-light-text dark:text-white" th:text="${'LKR ' + #numbers.formatDecimal(total / 3.0, 1, 2)}">LKR 0.00</span> will be charged now.
+                    </p>
+                </div>
+
+                <div id="bankDetailsBox" class="p-4 bg-elegant-highlight rounded-2xl border border-purple-500/20 space-y-3" style="display: none;">
+                    <span class="block text-xs font-bold uppercase tracking-wider text-elegant-highlight">Direct Bank Deposit Details</span>
+                    <div class="text-xs text-gray-500 space-y-1 bg-white dark:bg-black/20 p-3 rounded-xl border border-black/5 dark:border-white/5 font-medium">
+                        <div><strong>Bank:</strong> Sampath Bank PLC</div>
+                        <div><strong>Account Name:</strong> Lanka Threads Pvt Ltd</div>
+                        <div><strong>Account Number:</strong> 1009 8877 6655</div>
+                        <div><strong>Branch:</strong> Colombo Fort</div>
+                    </div>
+                    <div>
+                        <label for="bankRefInput" class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Transaction Ref / Reference ID</label>
+                        <input type="text" id="bankRefInput" name="bankRef" placeholder="Enter bank slip/transaction reference (min 6 chars)" minlength="6" class="w-full bg-white dark:bg-black/30 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-light-text dark:text-white">
+                    </div>
+                </div>
+
+                <div id="codDetailsBox" class="p-4 bg-elegant-highlight rounded-2xl border border-emerald-500/20 space-y-1" style="display: none;">
+                    <span class="block text-xs font-bold uppercase tracking-wider text-elegant-highlight">Cash on Delivery Confirmation</span>
+                    <p class="text-xs text-gray-500">
+                        You will pay in cash when the order is delivered to your address. Please ensure you have the exact amount of <span class="font-bold text-light-text dark:text-white" th:text="${'LKR ' + total}">LKR 0.00</span> ready.
+                    </p>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold tracking-widest uppercase text-light-text dark:text-white">Delivery Address</label>
+                    <input type="text" name="shippingAddress" placeholder="Street Address, City, Postal Code" required class="w-full bg-gray-50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white">
+                    <input type="tel" name="phone" placeholder="Mobile Number (e.g. +94 77 123 4567)" required inputmode="tel" autocomplete="tel" pattern="^(?:\+94|0)7(?:\s*?\d){8}$" title="Enter a valid Sri Lankan mobile number, such as +94 77 123 4567 or 077 123 4567" class="w-full bg-gray-50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white">
+                </div>
+
+                <button type="submit" class="w-full bg-accent-primary hover:bg-accent-primaryHover text-white rounded-full px-8 py-4 font-bold tracking-widest uppercase text-xs transition-colors shadow-glow flex items-center justify-center gap-2">
+                    <i class="bi bi-check-circle-fill"></i> Place Order Now
+                </button>
+            </form>
+        </aside>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+    function selectPaymentMethod(type) {
+        var cardBox = document.getElementById('cardDetailsBox');
+        var kokoBox = document.getElementById('kokoDetailsBox');
+        var bankBox = document.getElementById('bankDetailsBox');
+        var codBox = document.getElementById('codDetailsBox');
+
+        // Hide all
+        if (cardBox) cardBox.style.display = 'none';
+        if (kokoBox) kokoBox.style.display = 'none';
+        if (bankBox) bankBox.style.display = 'none';
+        if (codBox)  codBox.style.display = 'none';
+
+        // Remove required attributes from all payment boxes
+        toggleRequired(cardBox, false);
+        toggleRequired(bankBox, false);
+
+        // Show active and enable required attributes
+        if (type === 'card' && cardBox) {
+            cardBox.style.display = 'block';
+            toggleRequired(cardBox, true);
+        } else if (type === 'koko' && kokoBox) {
+            kokoBox.style.display = 'block';
+        } else if (type === 'bank' && bankBox) {
+            bankBox.style.display = 'block';
+            toggleRequired(bankBox, true);
+        } else if (type === 'cod' && codBox) {
+            codBox.style.display = 'block';
+        }
+
+        const labels = {
+            'card': document.getElementById('payCardLabel'),
+            'cod': document.getElementById('payCodLabel'),
+            'koko': document.getElementById('payKokoLabel'),
+            'bank': document.getElementById('payBankLabel')
+        };
+        
+        for (const key in labels) {
+            if (labels[key]) {
+                labels[key].classList.remove('border-accent-primary', 'bg-accent-primary/5');
+                labels[key].classList.add('border-black/10', 'dark:border-white/10');
+            }
+        }
+        
+        if (labels[type]) {
+            labels[type].classList.add('border-accent-primary', 'bg-accent-primary/5');
+            labels[type].classList.remove('border-black/10', 'dark:border-white/10');
+        }
+    }
+
+    function toggleRequired(container, isRequired) {
+        if (!container) return;
+        var inputs = container.querySelectorAll('input, select, textarea');
+        inputs.forEach(function(input) {
+            if (isRequired) {
+                input.setAttribute('required', 'required');
+            } else {
+                input.removeAttribute('required');
+            }
+        });
+    }
+
+    function initCardInputFormatting() {
+        document.querySelectorAll('input[name="cardNumber"]').forEach(function(input) {
+            input.addEventListener('input', function() {
+                let raw = this.value.replace(/\D/g, '').substring(0, 16);
+                let formatted = raw.match(/.{1,4}/g)?.join(' ') || raw;
+                this.value = formatted;
+                this.setCustomValidity('');
+            });
+        });
+
+        document.querySelectorAll('input[name="cardExpiry"]').forEach(function(input) {
+            input.addEventListener('input', function(e) {
+                let val = this.value.replace(/\D/g, '');
+                if (val.length > 4) val = val.substring(0, 4);
+
+                if (e.inputType === 'deleteContentBackward') {
+                    if (this.value.endsWith('/')) {
+                        this.value = val.substring(0, val.length - 1);
+                        this.setCustomValidity('');
+                        return;
+                    }
+                }
+
+                if (val.length === 1 && parseInt(val, 10) > 1) {
+                    val = '0' + val;
+                }
+
+                if (val.length >= 2) {
+                    let month = parseInt(val.substring(0, 2), 10);
+                    if (month === 0) month = '01';
+                    else if (month > 12) month = '12';
+                    else month = val.substring(0, 2);
+
+                    let year = val.substring(2);
+                    this.value = month + (year.length > 0 ? '/' + year : '/');
+                } else {
+                    this.value = val;
+                }
+                this.setCustomValidity('');
+            });
+        });
+
+        document.querySelectorAll('input[name="cardCvv"]').forEach(function(input) {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').substring(0, 3);
+                this.setCustomValidity('');
+            });
+        });
+
+        // Form submit-time validation
+        document.querySelectorAll('form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                let cardRadio = form.querySelector('input[name="paymentMethod"][value="Credit / Debit Card"]');
+                if (cardRadio && cardRadio.checked) {
+                    let cardNum = form.querySelector('input[name="cardNumber"]');
+                    let cardExp = form.querySelector('input[name="cardExpiry"]');
+                    let cardCvv = form.querySelector('input[name="cardCvv"]');
+
+                    if (cardNum) {
+                        let digits = cardNum.value.replace(/\D/g, '');
+                        if (digits.length !== 16) {
+                            cardNum.setCustomValidity('Please enter a full 16-digit card number.');
+                            cardNum.reportValidity();
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+
+                    if (cardExp) {
+                        let val = cardExp.value.trim();
+                        if (!/^\d{2}\/\d{2}$/.test(val)) {
+                            cardExp.setCustomValidity('Please enter expiry in MM/YY format (e.g. 08/28).');
+                            cardExp.reportValidity();
+                            e.preventDefault();
+                            return false;
+                        }
+                        let parts = val.split('/');
+                        let month = parseInt(parts[0], 10);
+                        let year = 2000 + parseInt(parts[1], 10);
+                        let now = new Date();
+                        let curYear = now.getFullYear();
+                        let curMonth = now.getMonth() + 1;
+
+                        if (month < 1 || month > 12) {
+                            cardExp.setCustomValidity('Invalid month (01-12).');
+                            cardExp.reportValidity();
+                            e.preventDefault();
+                            return false;
+                        }
+                        if (year < curYear || (year === curYear && month < curMonth)) {
+                            cardExp.setCustomValidity('Card has expired. Please enter a valid card.');
+                            cardExp.reportValidity();
+                            e.preventDefault();
+                            return false;
+                        }
+                        if (year > curYear + 15) {
+                            cardExp.setCustomValidity('Expiry year cannot exceed 15 years in the future.');
+                            cardExp.reportValidity();
+                            e.preventDefault();
+                            return false;
+                        }
+                        cardExp.setCustomValidity('');
+                    }
+
+                    if (cardCvv) {
+                        let digits = cardCvv.value.replace(/\D/g, '');
+                        if (digits.length !== 3) {
+                            cardCvv.setCustomValidity('Please enter a valid 3-digit CVV.');
+                            cardCvv.reportValidity();
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        selectPaymentMethod('card');
+        initCardInputFormatting();
+    });
+</script>
+</body>
+</html>
+
+
+

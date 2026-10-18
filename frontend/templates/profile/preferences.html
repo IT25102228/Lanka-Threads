@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Preferences')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('preferences', ${roleName})}"></div>
+
+<main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[800px] mx-auto min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+        <div>
+            <h1 class="text-3xl font-light tracking-tight uppercase">System Preferences</h1>
+            <p class="text-gray-500 text-sm mt-1 tracking-widest uppercase">Customize your experience</p>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div th:if="${successMessage}" class="mb-6 p-4 rounded-xl bg-blue-100/50 dark:bg-elegant-highlight border border-blue-200 dark:border-blue-500/20 text-sky-600 dark:text-sky-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-check2-circle me-2 text-lg"></i> <span th:text="${successMessage}"></span>
+    </div>
+
+    <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none p-6 md:p-8">
+        <form th:action="@{/profile/preferences}" method="post">
+            
+            <h5 class="text-xs font-bold tracking-widest uppercase text-sky-500 dark:text-sky-400 mb-6 border-b border-black/5 dark:border-white/5 pb-2">Appearance</h5>
+            
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h6 class="text-sm font-bold tracking-wider text-light-text dark:text-white">Dark Mode</h6>
+                    <p class="text-[10px] text-gray-500 tracking-widest uppercase mt-1">Enable cinematic dark theme across the application.</p>
+                </div>
+                
+                <!-- Light Blue Toggle Switch with Enhanced Light Mode Border -->
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="darkModeToggle" name="darkMode" value="true" class="sr-only peer"
+                           th:checked="${user.themePreference == null || user.themePreference == 'DARK'}"
+                           onchange="toggleDarkModePreview(this.checked)">
+                    <div class="custom-toggle-track w-14 h-7 bg-slate-200 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-sky-400 peer-checked:border-sky-400"></div>
+                </label>
+            </div>
+            
+            <h5 class="text-xs font-bold tracking-widest uppercase text-sky-500 dark:text-sky-400 mb-6 border-b border-black/5 dark:border-white/5 pb-2 mt-8">Notifications</h5>
+            
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h6 class="text-sm font-bold tracking-wider text-light-text dark:text-white">Email Notifications</h6>
+                    <p class="text-[10px] text-gray-500 tracking-widest uppercase mt-1">Receive important system alerts via email.</p>
+                </div>
+                <!-- Light Blue Toggle Switch with Enhanced Light Mode Border -->
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" checked>
+                    <div class="custom-toggle-track w-14 h-7 bg-slate-200 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-sky-400 peer-checked:border-sky-400"></div>
+                </label>
+            </div>
+            
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h6 class="text-sm font-bold tracking-wider text-light-text dark:text-white">In-App Alerts</h6>
+                    <p class="text-[10px] text-gray-500 tracking-widest uppercase mt-1">Show notification popups within the system.</p>
+                </div>
+                <!-- Light Blue Toggle Switch with Enhanced Light Mode Border -->
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" checked>
+                    <div class="custom-toggle-track w-14 h-7 bg-slate-200 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-sky-400 peer-checked:border-sky-400"></div>
+                </label>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-black/5 dark:border-white/10 flex justify-end">
+                <!-- Save Preferences Button -->
+                <button type="submit" class="bg-slate-900 dark:bg-slate-800 text-sky-400 dark:text-sky-400 rounded-full px-8 py-3 font-bold tracking-widest uppercase text-xs hover:-translate-y-1 hover:shadow-glow hover:text-sky-300 dark:hover:bg-slate-700 hover:bg-slate-950 transition-all duration-300 flex items-center">
+                    <i class="bi bi-save me-2 text-sky-400"></i> Save Preferences
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+    function toggleDarkModePreview(isDark) {
+        if (isDark) {
+            document.documentElement.classList.remove('light-mode');
+            document.documentElement.classList.add('dark');
+            if (document.body) {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark');
+            }
+            localStorage.setItem('userTheme', 'DARK');
+        } else {
+            document.documentElement.classList.add('light-mode');
+            document.documentElement.classList.remove('dark');
+            if (document.body) {
+                document.body.classList.add('light-mode');
+                document.body.classList.remove('dark');
+            }
+            localStorage.setItem('userTheme', 'LIGHT');
+        }
+        
+        if (typeof updateThemeIcon === 'function') {
+            updateThemeIcon(!isDark);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var isDark = document.documentElement.classList.contains('dark');
+        var toggleInput = document.getElementById('darkModeToggle');
+        if (toggleInput) {
+            toggleInput.checked = isDark;
+        }
+    });
+</script>
+</body>
+</html>
+
+

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Customer Dashboard')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('shop', 'Customer')}"></div>
+
+<main class="pt-[140px] pb-16 px-6 lg:px-12 max-w-[1600px] mx-auto min-h-screen">
+    
+    <!-- Hero Welcome Banner -->
+    <div class="relative overflow-hidden rounded-3xl mb-10 p-8 sm:p-12 border border-black/10 dark:border-white/10 bg-elegant-dark hover:opacity-90 backdrop-blur-xl animate-fade-up">
+        <div class="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-elegant-highlight blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-12 -top-12 w-64 h-64 rounded-full bg-elegant-highlight blur-3xl pointer-events-none"></div>
+        
+        <div class="relative z-10 max-w-3xl">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-accent-primary/15 text-accent-primary border border-accent-primary/30">
+                    <i class="bi bi-stars"></i> Exclusive Atelier
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/20">
+                    <span class="live-pulse-dot"></span> New Season 2026
+                </span>
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-light tracking-tight uppercase text-light-text dark:text-white leading-tight">
+                HANDCRAFTED <span class="font-serif font-bold gradient-text-gold">LUXURY POLOS</span>
+            </h1>
+            <p class="text-gray-600 dark:text-gray-300 text-sm sm:text-base mt-2 tracking-wide font-light max-w-2xl">
+                Experience Sri Lanka's finest pique cotton apparel. Meticulously tailored for timeless comfort, refined style, and enduring quality.
+            </p>
+            
+            <!-- Quick Navigation Action Chips -->
+            <div class="flex flex-wrap items-center gap-3 mt-6">
+                <a th:href="@{/customer/shop}" class="bg-elegant-dark hover:opacity-90 text-slate-950 font-bold px-6 py-3 rounded-full text-xs tracking-widest uppercase transition-all duration-300 shadow-md hover:shadow-glow hover:-translate-y-0.5 inline-flex items-center">
+                    <i class="bi bi-bag-check-fill me-2"></i> Explore Full Catalog
+                </a>
+                <a th:href="@{/customer/shop(category='Men')}" class="bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-light-text dark:text-white font-bold px-4 py-2.5 rounded-full text-xs tracking-widest uppercase border border-black/10 dark:border-white/15 transition-all duration-200 hover:-translate-y-0.5 inline-flex items-center">
+                    <i class="bi bi-gender-male me-1.5 text-elegant-highlight"></i> Men
+                </a>
+                <a th:href="@{/customer/shop(category='Women')}" class="bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-light-text dark:text-white font-bold px-4 py-2.5 rounded-full text-xs tracking-widest uppercase border border-black/10 dark:border-white/15 transition-all duration-200 hover:-translate-y-0.5 inline-flex items-center">
+                    <i class="bi bi-gender-female me-1.5 text-pink-500"></i> Women
+                </a>
+                <a th:href="@{/customer/shop(category='Children')}" class="bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-light-text dark:text-white font-bold px-4 py-2.5 rounded-full text-xs tracking-widest uppercase border border-black/10 dark:border-white/15 transition-all duration-200 hover:-translate-y-0.5 inline-flex items-center">
+                    <i class="bi bi-emoji-smile me-1.5 text-elegant-highlight"></i> Kids
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Strip -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        <div class="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-dark-card/70 backdrop-blur-md flex items-center gap-3.5 hover-lift-sm">
+            <div class="w-10 h-10 rounded-xl icon-badge-gold flex items-center justify-center text-lg">
+                <i class="bi bi-gem"></i>
+            </div>
+            <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-light-text dark:text-white">100% Pique Cotton</span>
+                <span class="block text-[11px] text-gray-500 dark:text-gray-400">Pure breathable organic knit</span>
+            </div>
+        </div>
+        <div class="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-dark-card/70 backdrop-blur-md flex items-center gap-3.5 hover-lift-sm">
+            <div class="w-10 h-10 rounded-xl icon-badge-emerald flex items-center justify-center text-lg">
+                <i class="bi bi-truck"></i>
+            </div>
+            <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-light-text dark:text-white">Islandwide Fast Delivery</span>
+                <span class="block text-[11px] text-gray-500 dark:text-gray-400">Direct from factory to doorstep</span>
+            </div>
+        </div>
+        <div class="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-dark-card/70 backdrop-blur-md flex items-center gap-3.5 hover-lift-sm">
+            <div class="w-10 h-10 rounded-xl icon-badge-cyan flex items-center justify-center text-lg">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-light-text dark:text-white">Guaranteed Quality</span>
+                <span class="block text-[11px] text-gray-500 dark:text-gray-400">Precision stitching & colorfast</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Header -->
+    <div class="flex flex-wrap justify-between items-end gap-4 mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+        <div>
+            <span class="text-[10px] font-bold tracking-[0.25em] text-accent-primary uppercase block mb-1">Curated Selection</span>
+            <h2 class="text-2xl sm:text-3xl font-light tracking-tight uppercase">LATEST <span class="font-bold gradient-text-gold">ARRIVALS</span></h2>
+        </div>
+        <a th:href="@{/customer/shop}" class="text-xs font-bold tracking-widest uppercase text-accent-primary hover:text-accent-primaryHover transition-colors inline-flex items-center gap-1 group">
+            Browse All Styles <i class="bi bi-arrow-right transition-transform group-hover:translate-x-1"></i>
+        </a>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div th:each="product, iterStat : ${latestProducts}" 
+             class="group bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl overflow-hidden shadow-sm hover:border-accent-primary/60 transition-all duration-300 flex flex-col hover-lift product-card-shine"
+             th:classappend="'stagger-' + (${iterStat.index} + 1)">
+            
+            <!-- Image & Badge Container -->
+            <div class="relative aspect-square overflow-hidden bg-black/5 dark:bg-white/5">
+                <img th:src="${product.displayImage}" th:alt="${product.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108">
+                
+                <!-- Category Floating Badge -->
+                <div class="absolute top-3 left-3">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-black/60 dark:bg-black/80 text-white backdrop-blur-md border border-white/20 shadow-sm" th:text="${product.category}">
+                        Men
+                    </span>
+                </div>
+                
+                <!-- New Arrival Ribbon -->
+                <div class="absolute top-3 right-3">
+                    <span class="px-2.5 py-1 rounded-full text-[9px] font-black tracking-wider uppercase bg-amber-500 text-slate-950 shadow-md">
+                        NEW
+                    </span>
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="p-6 flex flex-col flex-1">
+                <h3 class="text-base font-bold text-light-text dark:text-white mb-1.5 line-clamp-1 group-hover:text-accent-primary transition-colors" th:text="${product.name}">Product Name</h3>
+                
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3" th:text="${product.fabricType != null ? product.fabricType : 'Premium Pique Cotton'}">Premium Pique Cotton</p>
+                
+                <div class="mt-auto pt-3 border-t border-black/5 dark:border-white/10 flex items-center justify-between mb-4">
+                    <div>
+                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block">Price</span>
+                        <p class="text-lg font-black gradient-text-gold" th:text="${'LKR ' + #numbers.formatDecimal(product.price, 1, 2)}">LKR 0.00</p>
+                    </div>
+                </div>
+
+                <a th:href="@{/customer/shop(category=${product.category})}" class="w-full py-3 bg-black/5 dark:bg-white/5 group-hover:bg-gradient-to-r group-hover:from-[#C9A96E] group-hover:to-amber-500 group-hover:text-slate-950 text-light-text dark:text-white border border-black/10 dark:border-white/10 rounded-2xl text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center block shadow-sm">
+                    View in Shop <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(latestProducts)}" class="col-span-full py-16 text-center bg-white/50 dark:bg-dark-card/50 border border-black/5 dark:border-white/10 rounded-3xl">
+            <div class="w-16 h-16 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary text-3xl mx-auto mb-3 animate-float-slow">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <h3 class="text-base font-bold text-elegant-highlight uppercase tracking-wider">Catalog Updating</h3>
+            <p class="text-gray-500 text-xs tracking-widest uppercase mt-1">Fresh designs are being crafted and will arrive shortly.</p>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
+
+
+

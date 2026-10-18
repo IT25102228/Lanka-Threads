@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Orders')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('orders', 'Customer')}"></div>
+
+<main class="pt-[140px] pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto min-h-screen flex flex-col">
+    <div class="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4 gap-4">
+        <div>
+            <span class="inline-block bg-accent-primary/10 text-accent-primary text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">Customer Profile</span>
+            <h1 class="text-3xl font-light tracking-tight uppercase">My Order History</h1>
+        </div>
+        <a th:href="@{/customer/shop}" class="bg-[#C9A96E] hover:bg-[#B8934A] text-slate-950 rounded-full px-6 py-3 font-bold tracking-widest uppercase text-xs hover:-translate-y-1 hover:shadow-glow transition-all duration-300 inline-flex items-center">
+            <i class="bi bi-cart me-2"></i>
+            <span>Continue Shopping</span>
+        </a>
+    </div>
+
+    <div th:if="${success}" class="mb-6 p-4 rounded-xl bg-green-100/50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-check2-circle me-2 text-lg"></i> <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-100/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-exclamation-octagon me-2 text-lg"></i> <span th:text="${error}"></span>
+    </div>
+
+    <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden flex-1 flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                    <tr>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Order ID</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Date</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-right">Total Amount</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-center">Status</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Items</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                    <tr th:each="order : ${orders}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                        <td class="py-4 px-6 font-bold text-accent-primary tracking-widest" th:text="${order.orderCode}">ORD-100001</td>
+                        <td class="py-4 px-6 text-gray-500 font-medium" th:text="${order.orderDate}">2026-07-30</td>
+                        <td class="py-4 px-6 text-right font-bold text-lg" th:text="${'LKR ' + order.totalAmount}">LKR 50.00</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="inline-block bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.contains(order.status, 'Pending')}" th:text="${order.status}">Pending</span>
+                            <span class="inline-block bg-accent-primary/10 text-accent-primary border border-accent-primary/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.contains(order.status, 'Processing')}" th:text="${order.status}">Processing</span>
+                            <span class="inline-block bg-status-success/10 text-status-success border border-status-success/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.contains(order.status, 'Shipped')}" th:text="${order.status}">Shipped</span>
+                            <span class="inline-block bg-status-danger/10 text-status-danger border border-status-danger/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.contains(order.status, 'Cancelled')}" th:text="${order.status}">Cancelled</span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex flex-col gap-3">
+                                <ul class="list-none mb-0 space-y-1">
+                                    <li th:each="item : ${order.orderItems}" class="text-xs text-gray-500 tracking-wider">
+                                        <span class="font-bold text-light-text dark:text-gray-300" th:text="${item.quantity + 'x'}"></span> 
+                                        <span th:text="${item.product.name}">Product Name</span>
+                                    </li>
+                                </ul>
+                                <form th:if="${#strings.contains(order.status, 'Pending') or #strings.contains(order.status, 'Processing')}" th:action="@{/customer/orders/cancel}" method="post" class="m-0">
+                                    <input type="hidden" name="id" th:value="${order.id}">
+                                    <button type="submit" data-confirm="Cancel this order? This will return the items to stock." class="delete-btn delete-btn--sm">
+                                        <div class="trash-wrapper">
+                                            <svg class="trash-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <g class="trash-lid">
+                                                    <path d="M9 4.5C9 4.22386 9.22386 4 9.5 4H14.5C14.7761 4 15 4.22386 15 4.5V5.5H9V4.5Z" fill="currentColor"/>
+                                                    <path d="M4 5.75C4 5.33579 4.33579 5 4.75 5H19.25C19.6642 5 20 5.33579 20 5.75C20 6.16421 19.6642 6.5 19.25 6.5H4.75C4.33579 6.5 4 6.16421 4 5.75Z" fill="currentColor"/>
+                                                </g>
+                                                <defs>
+                                                    <clipPath th:id="'trashClipOrder_' + ${order.id}">
+                                                        <path d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z"/>
+                                                    </clipPath>
+                                                </defs>
+                                                <g th:attr="clip-path='url(#trashClipOrder_' + ${order.id} + ')'">
+                                                    <rect class="trash-liquid" x="4" y="7" width="16" height="16"/>
+                                                </g>
+                                                <path class="trash-body" d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                                <path class="trash-line" d="M9.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                                <path class="trash-line" d="M12 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                                <path class="trash-line" d="M14.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                            </svg>
+                                        </div>
+                                        <div class="text-wrapper">
+                                            <span class="letter" style="--fly-dist: 36px">C</span>
+                                            <span class="letter" style="--fly-dist: 46px">a</span>
+                                            <span class="letter" style="--fly-dist: 56px">n</span>
+                                            <span class="letter" style="--fly-dist: 66px">c</span>
+                                            <span class="letter" style="--fly-dist: 76px">e</span>
+                                            <span class="letter" style="--fly-dist: 86px">l</span>
+                                        </div>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="5" class="py-16 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                                <i class="bi bi-box-seam text-4xl mb-3 opacity-50"></i>
+                                <p class="text-sm font-light tracking-widest uppercase">You have no order history.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
+

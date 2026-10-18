@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Support - Lanka Threads | Premium Polo Collection</title>
+    <link rel="icon" type="image/png" th:href="@{/images/logo.png}">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        (function () {
+            var savedTheme = localStorage.getItem('userTheme');
+            var isLight = (savedTheme === 'LIGHT');
+            if (isLight) {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light-mode');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#0a0a0a', card: '#141414', border: 'rgba(255, 255, 255, 0.08)' },
+                        light: { bg: '#EAECEF', card: '#FFFFFF', text: '#0F172A' },
+                        polo: { gold: '#C9A96E', goldDark: '#A67C1E', goldLight: '#E5CCA0', navy: '#1B2A4A' }
+                    },
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        serif: ['Sora', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        html.light-mode body {
+            background-color: #EAECEF;
+            color: #0F172A;
+        }
+
+        /* ── Input Fields ── */
+        .polo-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 0.875rem;
+            padding: 0.75rem 1.15rem;
+            color: #ffffff;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+
+        html.light-mode .polo-input {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            color: #0F172A;
+        }
+
+        .polo-input::placeholder {
+            color: rgba(255,255,255,0.35);
+            font-weight: 400;
+        }
+
+        html.light-mode .polo-input::placeholder {
+            color: #94A3B8;
+        }
+
+        .polo-input:focus {
+            border-color: #C9A96E;
+            box-shadow: 0 0 0 3px rgba(201,169,110,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        html.light-mode .polo-input:focus {
+            background: #FFFFFF;
+            border-color: #C9A96E;
+            box-shadow: 0 0 0 3px rgba(201,169,110,0.25);
+        }
+
+        /* ── Submit Button ── */
+        .polo-btn {
+            width: 100%;
+            padding: 0.875rem;
+            background: #111827;
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 0.875rem;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        html.light-mode .polo-btn {
+            background: #0F172A;
+            color: #ffffff;
+            border-color: #0F172A;
+        }
+
+        .polo-btn:hover {
+            background: #C9A96E;
+            border-color: #C9A96E;
+            color: #0a0a0a;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -6px rgba(201,169,110,0.4);
+        }
+
+        /* ── Theme Toggle Button ── */
+        .theme-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        html.light-mode .theme-btn {
+            background: #FFFFFF;
+            border-color: #E2E8F0;
+            color: #0F172A;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+
+        .theme-btn:hover {
+            background: rgba(201,169,110,0.2);
+            border-color: #C9A96E;
+            color: #C9A96E;
+            transform: scale(1.05);
+        }
+
+        /* ── Support Nav Button ── */
+        .support-nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #CBD5E1;
+        }
+        .support-nav-btn:hover {
+            color: #C9A96E;
+            border-color: #C9A96E;
+        }
+        html.light-mode .support-nav-btn {
+            background: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #334155 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+        }
+        html.light-mode .support-nav-btn:hover {
+            color: #C9A96E !important;
+            border-color: #C9A96E !important;
+        }
+
+        /* ── Support Cards (Dual Theme) ── */
+        .support-card {
+            background: #141414;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            color: #FFFFFF;
+            transition: all 0.35s ease;
+        }
+        html.light-mode .support-card {
+            background: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+            box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08) !important;
+            color: #0F172A !important;
+        }
+
+        /* ── Contact Items ── */
+        .contact-item-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.25s ease;
+        }
+        html.light-mode .contact-item-card {
+            background: #F8FAFC !important;
+            border: 1px solid #CBD5E1 !important;
+        }
+        .contact-item-card:hover {
+            border-color: #C9A96E !important;
+        }
+
+        .contact-item-title {
+            color: #94A3B8;
+        }
+        html.light-mode .contact-item-title {
+            color: #64748B !important;
+        }
+
+        .contact-item-value {
+            color: #FFFFFF;
+        }
+        html.light-mode .contact-item-value {
+            color: #0F172A !important;
+        }
+
+        .support-title {
+            color: #FFFFFF;
+        }
+        html.light-mode .support-title {
+            color: #0F172A !important;
+        }
+
+        .support-subtitle {
+            color: #94A3B8;
+        }
+        html.light-mode .support-subtitle {
+            color: #475569 !important;
+        }
+
+        .support-label {
+            color: #CBD5E1;
+        }
+        html.light-mode .support-label {
+            color: #1E293B !important;
+        }
+
+        select.polo-input option {
+            background: #141414;
+            color: #FFFFFF;
+        }
+        html.light-mode select.polo-input option {
+            background: #FFFFFF !important;
+            color: #0F172A !important;
+        }
+
+        .gold-line {
+            width: 40px;
+            height: 2px;
+            background: #C9A96E;
+        }
+
+        .section-label {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #C9A96E;
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased py-8 px-4 sm:px-6 lg:px-8 flex flex-col justify-center min-h-screen">
+
+    <!-- Top Navigation Header -->
+    <div class="max-w-6xl mx-auto w-full flex items-center justify-between mb-8">
+        <a th:href="@{/login}" class="inline-flex items-center gap-2 px-4 py-2 rounded-full support-nav-btn text-xs font-bold uppercase tracking-wider transition-all shadow-sm">
+            <i class="bi bi-arrow-left text-sm"></i> Back to Portal
+        </a>
+
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="quickToggleTheme()" title="Toggle Theme" class="theme-btn" id="themeToggleIconBtn">
+                <i class="bi bi-moon-stars text-base" id="themeToggleIcon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left Side: Information & Quick Contact -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="support-card rounded-3xl p-6 sm:p-8">
+                
+                <!-- Brand Header -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="font-serif text-2xl font-black tracking-wider support-title">LANKA</span>
+                        <span class="font-sans text-2xl font-light tracking-[0.2em] text-[#C9A96E]">THREADS</span>
+                    </div>
+                    <div class="gold-line mb-3"></div>
+                    <p class="section-label mb-2">Support Desk</p>
+                    <h1 class="font-serif text-2xl sm:text-3xl font-bold tracking-tight support-title mb-2">
+                        Contact Support
+                    </h1>
+                    <p class="support-subtitle text-xs sm:text-sm font-normal leading-relaxed">
+                        Need assistance with your orders, account access, or factory operations? Our team is available 24/7.
+                    </p>
+                </div>
+
+                <!-- Contact Info List -->
+                <div class="space-y-3.5">
+                    <a href="mailto:support@lankathreads.com" class="flex items-center p-3.5 contact-item-card rounded-2xl group shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-[#C9A96E]/10 text-[#C9A96E] flex items-center justify-center me-3 group-hover:scale-105 transition-transform flex-shrink-0">
+                            <i class="bi bi-envelope text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-[10px] font-bold tracking-wider uppercase contact-item-title mb-0.5">Email Support</h3>
+                            <p class="font-semibold text-xs sm:text-sm contact-item-value">support@lankathreads.com</p>
+                        </div>
+                    </a>
+
+                    <a href="tel:+94112345678" class="flex items-center p-3.5 contact-item-card rounded-2xl group shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-[#C9A96E]/10 text-[#C9A96E] flex items-center justify-center me-3 group-hover:scale-105 transition-transform flex-shrink-0">
+                            <i class="bi bi-telephone text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-[10px] font-bold tracking-wider uppercase contact-item-title mb-0.5">Hotline (Toll Free)</h3>
+                            <p class="font-semibold text-xs sm:text-sm contact-item-value">+94 (0) 11 234 5678</p>
+                        </div>
+                    </a>
+
+                    <div class="flex items-center p-3.5 contact-item-card rounded-2xl shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-[#C9A96E]/10 text-[#C9A96E] flex items-center justify-center me-3 flex-shrink-0">
+                            <i class="bi bi-geo-alt text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-[10px] font-bold tracking-wider uppercase contact-item-title mb-0.5">Headquarters</h3>
+                            <p class="font-semibold text-xs sm:text-sm contact-item-value">Industrial Zone, Colombo 02, Sri Lanka</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Side: Interactive Support Ticket Form -->
+        <div class="lg:col-span-7">
+            <div class="support-card rounded-3xl p-6 sm:p-8 lg:p-10">
+                
+                <div class="mb-6">
+                    <div class="gold-line mb-3"></div>
+                    <p class="section-label mb-1">Direct Assistance</p>
+                    <h2 class="font-serif text-2xl sm:text-3xl font-bold support-title mb-1.5">
+                        Submit a Ticket
+                    </h2>
+                    <p class="support-subtitle text-xs sm:text-sm font-normal">
+                        Fill out the form below and an operations specialist will respond within 24 hours.
+                    </p>
+                </div>
+
+                <!-- Success Banner -->
+                <div th:if="${successMessage}" class="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs sm:text-sm font-medium flex items-start gap-3 shadow-sm">
+                    <i class="bi bi-check-circle-fill text-emerald-400 text-lg mt-0.5 flex-shrink-0"></i>
+                    <span th:text="${successMessage}"></span>
+                </div>
+
+                <!-- Support Inquiry Form -->
+                <form th:action="@{/support}" method="post" id="supportForm" class="space-y-4" novalidate>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="name" class="block text-[11px] font-bold uppercase tracking-wider support-label mb-1.5">Your Name</label>
+                            <input type="text" id="name" name="name" class="polo-input" placeholder="e.g. Kasun Perera" required>
+                            <div id="nameError" class="text-xs text-rose-500 mt-1 hidden flex items-center gap-1 font-medium pl-1"></div>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-[11px] font-bold uppercase tracking-wider support-label mb-1.5">Email Address</label>
+                            <input type="email" id="email" name="email" class="polo-input" placeholder="kasun@example.com" required>
+                            <div id="emailError" class="text-xs text-rose-500 mt-1 hidden flex items-center gap-1 font-medium pl-1"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="subject" class="block text-[11px] font-bold uppercase tracking-wider support-label mb-1.5">Subject / Category</label>
+                        <div class="relative">
+                            <select id="subject" name="subject" class="polo-input pr-10" required>
+                                <option value="Technical Support">Technical Support &amp; System Issue</option>
+                                <option value="Orders &amp; Shipping">Orders &amp; Distribution Inquiry</option>
+                                <option value="Account &amp; Login">Account Access &amp; Password Reset</option>
+                                <option value="Supplier &amp; Inventory">Supplier / Material Supply</option>
+                                <option value="General Inquiry">General Inquiry</option>
+                            </select>
+                            <i class="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="message" class="block text-[11px] font-bold uppercase tracking-wider support-label mb-1.5">Detailed Message</label>
+                        <textarea id="message" name="message" rows="4" maxlength="1000" class="polo-input resize-none" placeholder="Please describe your inquiry in detail..." required></textarea>
+                        <div class="flex justify-between items-center mt-1.5">
+                            <div id="messageError" class="text-xs text-rose-500 hidden flex items-center gap-1 font-medium pl-1"></div>
+                            <div id="charCounter" class="text-[10px] text-slate-400 font-semibold tracking-wider uppercase ml-auto">0 / 1000 characters</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" id="submitBtn" class="polo-btn flex items-center justify-center gap-2 shadow-lg">
+                            <span id="btnSpinner" class="hidden"><svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></span>
+                            <span id="btnText"><i class="bi bi-send-fill mr-1"></i> Submit Support Ticket</span>
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Quick Theme Toggle Helper -->
+    <script>
+        window.updateThemeIcon = function(isLight) {
+            const icon = document.getElementById('themeToggleIcon');
+            if (icon) {
+                if (isLight) {
+                    icon.className = 'bi bi-sun-fill text-base text-amber-500';
+                } else {
+                    icon.className = 'bi bi-moon-stars text-base text-slate-300';
+                }
+            }
+        };
+
+        window.applyTheme = function (isLight) {
+            const root = document.documentElement;
+            if (isLight) {
+                root.classList.remove('dark');
+                root.classList.add('light-mode');
+                if (document.body) {
+                    document.body.classList.remove('dark');
+                    document.body.classList.add('light-mode');
+                }
+                localStorage.setItem('userTheme', 'LIGHT');
+                window.updateThemeIcon(true);
+            } else {
+                root.classList.remove('light-mode');
+                root.classList.add('dark');
+                if (document.body) {
+                    document.body.classList.remove('light-mode');
+                    document.body.classList.add('dark');
+                }
+                localStorage.setItem('userTheme', 'DARK');
+                window.updateThemeIcon(false);
+            }
+        };
+
+        window.quickToggleTheme = function () {
+            const icon = document.getElementById('themeToggleIcon');
+            if (icon) {
+                icon.style.transform = 'rotate(360deg) scale(1.3)';
+                setTimeout(() => {
+                    icon.style.transform = 'rotate(0deg) scale(1)';
+                }, 400);
+            }
+            const isCurrentlyLight = document.documentElement.classList.contains('light-mode');
+            window.applyTheme(!isCurrentlyLight);
+        };
+
+        (function () {
+            const savedTheme = localStorage.getItem('userTheme');
+            const isLight = (savedTheme === 'LIGHT');
+            window.applyTheme(isLight);
+        })();
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var isLight = document.documentElement.classList.contains('light-mode');
+            updateThemeIcon(isLight);
+
+            const form = document.getElementById('supportForm');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const messageInput = document.getElementById('message');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const btnText = document.getElementById('btnText');
+            const charCounter = document.getElementById('charCounter');
+
+            const nameError = document.getElementById('nameError');
+            const emailError = document.getElementById('emailError');
+            const messageError = document.getElementById('messageError');
+
+            let nameTouched = false;
+            let emailTouched = false;
+            let messageTouched = false;
+
+            messageInput.addEventListener('input', function () {
+                const len = messageInput.value.length;
+                charCounter.textContent = `${len} / 1000 characters`;
+                if (messageTouched) validateMessage();
+            });
+
+            nameInput.addEventListener('blur', () => { nameTouched = true; validateName(); });
+            nameInput.addEventListener('input', () => { if (nameTouched) validateName(); });
+
+            emailInput.addEventListener('blur', () => { emailTouched = true; validateEmail(); });
+            emailInput.addEventListener('input', () => { if (emailTouched) validateEmail(); });
+
+            messageInput.addEventListener('blur', () => { messageTouched = true; validateMessage(); });
+
+            function validateName() {
+                const val = nameInput.value.trim();
+                const isValid = val.length > 0;
+                setFieldValidity(nameInput, nameError, isValid, "Name is required");
+                return isValid;
+            }
+
+            function validateEmail() {
+                const val = emailInput.value.trim();
+                if (val.length === 0) {
+                    setFieldValidity(emailInput, emailError, false, "Email address is required");
+                    return false;
+                }
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const isValid = emailRegex.test(val);
+                setFieldValidity(emailInput, emailError, isValid, "Please enter a valid email address");
+                return isValid;
+            }
+
+            function validateMessage() {
+                const val = messageInput.value.trim();
+                if (val.length === 0) {
+                    setFieldValidity(messageInput, messageError, false, "Message is required");
+                    return false;
+                }
+                const isValid = val.length >= 10;
+                setFieldValidity(messageInput, messageError, isValid, "Message must be at least 10 characters");
+                return isValid;
+            }
+
+            function setFieldValidity(input, errorElement, isValid, errorMsg) {
+                if (isValid) {
+                    input.classList.remove('border-rose-500');
+                    input.classList.add('border-emerald-500');
+                    errorElement.classList.add('hidden');
+                } else {
+                    input.classList.remove('border-emerald-500');
+                    input.classList.add('border-rose-500');
+                    errorElement.innerHTML = `<i class="bi bi-exclamation-circle-fill"></i> ${errorMsg}`;
+                    errorElement.classList.remove('hidden');
+                }
+            }
+
+            form.addEventListener('submit', function (e) {
+                nameTouched = true;
+                emailTouched = true;
+                messageTouched = true;
+
+                const isNameValid = validateName();
+                const isEmailValid = validateEmail();
+                const isMsgValid = validateMessage();
+
+                if (!isNameValid || !isEmailValid || !isMsgValid) {
+                    e.preventDefault();
+                    if (!isNameValid) nameInput.focus();
+                    else if (!isEmailValid) emailInput.focus();
+                    else if (!isMsgValid) messageInput.focus();
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                    btnSpinner.classList.remove('hidden');
+                    btnText.innerHTML = 'Submitting Ticket...';
+                }
+            });
+        });
+    </script>
+    <script th:src="@{/js/validation.js}"></script>
+</body>
+
+</html>
+
+
+

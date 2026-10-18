@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Supplier Dashboard')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('dashboard', 'Supplier Coordination Officer')}"></div>
+
+<main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[1500px] mx-auto min-h-screen flex flex-col space-y-6">
+    <!-- Header with Live Telemetry -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-black/10 dark:border-white/10 animate-fade-up">
+        <div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-indigo-500/25">
+                    <i class="bi bi-truck"></i> Procurement & Supplier Desk
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/25">
+                    <span class="live-pulse-dot"></span> Quality Gate Live
+                </span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-light tracking-tight uppercase text-light-text dark:text-white">
+                MATERIAL <span class="font-bold gradient-text-blue">INSPECTION</span>
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 tracking-widest uppercase">
+                Verify incoming fabric deliveries, approve quality batches & update inventory stock
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a th:href="@{/supplier/manage}"
+                class="bg-elegant-dark hover:opacity-90 text-white font-bold px-5 py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all duration-300 shadow-md hover:shadow-glow hover:-translate-y-0.5 inline-flex items-center">
+                <i class="bi bi-folder-plus me-2"></i> Manage Receipts & Suppliers
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert Messages with Colorful Glow -->
+    <div th:if="${success}" class="p-4 rounded-2xl bg-elegant-highlight border border-emerald-500/30 text-emerald-700 dark:text-elegant-highlight text-sm font-semibold tracking-wide flex items-center gap-3 animate-fade-up">
+        <div class="w-9 h-9 rounded-xl bg-elegant-highlight flex items-center justify-center flex-shrink-0 text-slate-600 dark:text-gray-300 text-base">
+            <i class="bi bi-check2-circle"></i>
+        </div>
+        <span th:text="${success}">Operation completed successfully.</span>
+    </div>
+    <div th:if="${error}" class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-sm font-semibold tracking-wide flex items-center gap-3 animate-fade-up">
+        <div class="w-9 h-9 rounded-xl bg-rose-500/20 flex items-center justify-center flex-shrink-0 text-rose-600 dark:text-rose-400 text-base">
+            <i class="bi bi-exclamation-octagon"></i>
+        </div>
+        <span th:text="${error}">Error occurred.</span>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-6">
+        
+        <!-- Pending Inspections (Rose / Amber) -->
+        <div class="dash-card-rose hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-1">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest">Pending Quality Gate</span>
+                <div class="w-11 h-11 rounded-2xl icon-badge-rose flex items-center justify-center text-xl animate-float-slow">
+                    <i class="bi bi-hourglass-top"></i>
+                </div>
+            </div>
+            <div>
+                <div class="text-3xl sm:text-4xl font-black text-rose-600 dark:text-rose-400" th:text="${pendingCount}">0</div>
+                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium">Batches awaiting QA decision</span>
+            </div>
+        </div>
+
+        <!-- Total Volume in Queue (Cyan) -->
+        <div class="dash-card-cyan hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-2">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-widest">Approved Receipts</span>
+                <div class="w-11 h-11 rounded-2xl icon-badge-cyan flex items-center justify-center text-xl animate-float-slow">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+            </div>
+            <div>
+                <div class="text-3xl sm:text-4xl font-black text-slate-600 dark:text-gray-300" th:text="${approvedCount}">0</div>
+                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium">Restocked to raw materials</span>
+            </div>
+        </div>
+
+        <!-- Total Material Receipts (Indigo) -->
+        <div class="dash-card-indigo hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-3">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-widest">Total Receipts</span>
+                <div class="w-11 h-11 rounded-2xl icon-badge-blue flex items-center justify-center text-xl animate-float-slow">
+                    <i class="bi bi-receipt"></i>
+                </div>
+            </div>
+            <div>
+                <div class="text-3xl sm:text-4xl font-black text-slate-600 dark:text-gray-300" th:text="${allMaterialsCount}">0</div>
+                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium">Intake transactions logged</span>
+            </div>
+        </div>
+
+        <!-- Registered Vendors (Emerald) -->
+        <div class="dash-card-emerald hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-4">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-widest">Active Vendors</span>
+                <div class="w-11 h-11 rounded-2xl icon-badge-emerald flex items-center justify-center text-xl animate-float-slow">
+                    <i class="bi bi-building-check"></i>
+                </div>
+            </div>
+            <div>
+                <div class="text-3xl sm:text-4xl font-black text-slate-600 dark:text-gray-300" th:text="${totalSuppliersCount}">0</div>
+                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium">Registered textile suppliers</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Card: Pending Material Inspections -->
+    <div class="bg-white dark:bg-dark-card/80 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-3xl shadow-sm overflow-hidden flex-1 flex flex-col hover-lift stagger-5">
+        <div class="p-6 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl icon-badge-blue flex items-center justify-center text-base">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold uppercase tracking-wider text-light-text dark:text-white">Pending Material Deliveries</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Review received fabric batches and sign off on quality</p>
+                </div>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-amber-500/25">
+                <span class="live-pulse-dot-amber"></span> Action Required
+            </span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] whitespace-nowrap">Receive ID & Supplier</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Fabric Material</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Color Swatch</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-right whitespace-nowrap">Delivered (kg)</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-center whitespace-nowrap">Quality Sign-off</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-black/5 dark:divide-white/5 font-medium">
+                    <tr th:each="mat : ${pendingMaterials}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                        <td class="py-2.5 px-3.5 whitespace-nowrap">
+                            <span class="font-bold font-mono text-accent-primary text-xs bg-accent-primary/10 px-2 py-0.5 rounded-md" th:text="${mat.receiptId}">MR-2026-001</span>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5" th:text="${mat.supplierName + ' (' + mat.supplierCode + ')'}">Supplier</div>
+                        </td>
+                        <td class="py-2.5 px-3.5">
+                            <span class="inline-block px-2.5 py-0.5 rounded-lg bg-elegant-highlight border border-indigo-500/25 text-slate-600 dark:text-gray-300 font-bold text-xs uppercase tracking-wider"
+                                  th:text="${mat.fabricType}">Cotton</span>
+                        </td>
+                        <td class="py-2.5 px-3.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full border border-black/20 dark:border-white/30 shadow-sm flex-shrink-0"
+                                      th:style="'background-color: ' + (${mat.colour.toLowerCase().contains('navy')} ? '#1B2A4A' : (${mat.colour.toLowerCase().contains('black')} ? '#111111' : (${mat.colour.toLowerCase().contains('white')} ? '#F8FAFC' : (${mat.colour.toLowerCase().contains('red') || mat.colour.toLowerCase().contains('maroon')} ? '#DC2626' : (${mat.colour.toLowerCase().contains('green')} ? '#16A34A' : (${mat.colour.toLowerCase().contains('yellow')} ? '#EAB308' : (${mat.colour.toLowerCase().contains('pink')} ? '#EC4899' : (${mat.colour.toLowerCase().contains('orange')} ? '#F97316' : (${mat.colour.toLowerCase().contains('blue')} ? '#2563EB' : (${mat.colour.toLowerCase().contains('grey') || mat.colour.toLowerCase().contains('gray')} ? '#6B7280' : '#C9A96E'))))))))))"></span>
+                                <span class="font-semibold text-elegant-highlight text-xs" th:text="${mat.colour}">Black</span>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-3.5 text-right whitespace-nowrap font-bold text-sm text-light-text dark:text-white font-mono">
+                            <span th:text="${mat.quantityReceived}">200</span>
+                            <span class="text-[10px] font-semibold text-gray-400 uppercase ms-0.5">kg</span>
+                        </td>
+                        <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <form th:action="@{/supplier/inspect}" method="post" class="m-0">
+                                    <input type="hidden" name="id" th:value="${mat.id}">
+                                    <input type="hidden" name="status" value="APPROVED">
+                                    <input type="hidden" name="redirectPage" value="dashboard">
+                                    <button type="submit" class="bg-elegant-dark hover:opacity-90 text-white font-bold text-[11px] tracking-wider uppercase px-3 py-1.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 inline-flex items-center gap-1">
+                                        <i class="bi bi-check-lg"></i> Approve
+                                    </button>
+                                </form>
+                                <form th:action="@{/supplier/inspect}" method="post" class="m-0">
+                                    <input type="hidden" name="id" th:value="${mat.id}">
+                                    <input type="hidden" name="status" value="REJECTED">
+                                    <input type="hidden" name="redirectPage" value="dashboard">
+                                    <button type="submit" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/25 text-[11px] font-bold tracking-wider uppercase px-3 py-1.5 rounded-lg transition-all duration-200 hover:-translate-y-0.5 inline-flex items-center gap-1">
+                                        <i class="bi bi-x-lg"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(pendingMaterials)}">
+                        <td colspan="5" class="py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                <div class="w-12 h-12 rounded-full bg-elegant-highlight flex items-center justify-center text-elegant-highlight text-2xl mb-2 animate-float-slow">
+                                    <i class="bi bi-shield-check"></i>
+                                </div>
+                                <h3 class="text-sm font-bold text-elegant-highlight uppercase tracking-wider">Quality Gate Clear</h3>
+                                <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 uppercase tracking-widest">No material deliveries waiting for inspection.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Material Receiving & Quality Logs -->
+    <div class="bg-white dark:bg-dark-card/80 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden p-5">
+        <div class="flex items-center justify-between mb-4 border-b border-black/5 dark:border-white/10 pb-3">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-journal-text text-elegant-highlight text-lg"></i>
+                <h3 class="text-sm font-bold tracking-widest uppercase text-light-text dark:text-white">Recent Material Receiving & Quality Logs</h3>
+            </div>
+            <a th:href="@{/supplier/manage}" class="text-xs text-accent-primary hover:underline uppercase tracking-wider font-semibold inline-flex items-center gap-1">
+                View Full Audit Trail <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="space-y-2.5">
+            <div th:each="log : ${recentLogs}" class="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] border border-black/5 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors">
+                <div class="flex items-start sm:items-center gap-2.5 flex-1 min-w-0">
+                    <span th:if="${log.action == 'MATERIAL_RECEIVED'}" class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-blue-500/20 whitespace-nowrap flex-shrink-0">
+                        <i class="bi bi-box-arrow-in-down me-1"></i>INTAKE
+                    </span>
+                    <span th:if="${log.action == 'QUALITY_APPROVED'}" class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/20 whitespace-nowrap flex-shrink-0">
+                        <i class="bi bi-check-circle-fill me-1"></i>QA APPROVED
+                    </span>
+                    <span th:if="${log.action == 'QUALITY_REJECTED'}" class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 whitespace-nowrap flex-shrink-0">
+                        <i class="bi bi-x-circle-fill me-1"></i>QA REJECTED
+                    </span>
+                    <span th:if="${log.action == 'INVENTORY_RESTOCKED'}" class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-purple-500/20 whitespace-nowrap flex-shrink-0">
+                        <i class="bi bi-arrow-repeat me-1"></i>STOCK SYNC
+                    </span>
+                    <div class="min-w-0 flex-1 leading-relaxed">
+                        <span class="font-bold font-mono text-accent-primary bg-accent-primary/10 px-1.5 py-0.5 rounded text-[11px]" th:text="${log.receiptId}">MR-2026-001</span>
+                        <span class="supplier-log-details text-slate-700 dark:text-slate-300 ms-1" th:text="${log.details}">Details</span>
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0 self-end sm:self-center text-gray-400 font-mono text-[11px] bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded" th:text="${#temporals.format(log.timestamp, 'HH:mm:ss')}">19:30:00</div>
+            </div>
+            <div th:if="${#lists.isEmpty(recentLogs)}" class="text-center py-6 text-gray-400 text-xs">
+                No recent material receiving logs recorded.
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
+
+
+
+

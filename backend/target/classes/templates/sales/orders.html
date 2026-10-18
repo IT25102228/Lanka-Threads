@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Manage Orders')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('orders', 'Sales Manager')}"></div>
+
+<main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="flex justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+        <div>
+            <span class="inline-block bg-accent-primary/10 text-accent-primary text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">Manager Hub</span>
+            <h1 class="text-3xl font-light tracking-tight uppercase">Customer Orders</h1>
+            <p class="text-gray-500 text-sm mt-1 tracking-widest uppercase">Manage Order Status and Processing</p>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${success}" class="mb-6 p-4 rounded-2xl bg-green-100/60 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400 text-sm font-medium tracking-wide flex items-center gap-3 animate-fade-in">
+        <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-check2-circle text-green-500 text-lg"></i>
+        </div>
+        <span th:text="${success}">Operation completed successfully.</span>
+    </div>
+    <div th:if="${error}" class="mb-6 p-4 rounded-2xl bg-red-100/60 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-sm font-medium tracking-wide flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-exclamation-octagon text-red-500 text-lg"></i>
+        </div>
+        <span th:text="${error}">Error occurred.</span>
+    </div>
+
+    <!-- Orders Matrix -->
+    <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden flex-1 flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                    <tr>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Order ID</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Date</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Customer</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-right">Total Amount</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-center">Status</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                    <tr th:each="order : ${orders}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                        <td class="py-4 px-6 font-bold text-accent-primary tracking-widest" th:text="${order.orderCode != null ? order.orderCode : ('ORD-' + order.id)}">ORD-100001</td>
+                        <td class="py-4 px-6 text-gray-500 font-medium" th:text="${order.orderDate != null ? #temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm') : 'N/A'}">2026-07-30</td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold text-xs" 
+                                     th:text="${order.customer != null && order.customer.name != null && !order.customer.name.isEmpty() ? #strings.substring(order.customer.name,0,1).toUpperCase() : 'C'}">C</div>
+                                <div>
+                                    <span class="font-medium text-light-text dark:text-white uppercase tracking-wider block" th:text="${order.customer != null ? order.customer.name : 'Guest Customer'}">Customer Name</span>
+                                    <span class="text-[11px] text-gray-400 font-mono" th:text="${order.phone != null ? order.phone : (order.customer != null && order.customer.phone != null ? order.customer.phone : 'N/A')}">+94771234567</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-right font-bold text-base" th:text="${'LKR ' + (order.totalAmount != null ? #numbers.formatDecimal(order.totalAmount, 1, 2) : '0.00')}">LKR 5,000.00</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="inline-block bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.containsIgnoreCase(order.status, 'Pending')} " th:text="${order.status}">Pending</span>
+                            <span class="inline-block bg-accent-primary/10 text-accent-primary border border-accent-primary/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.containsIgnoreCase(order.status, 'Processing') or #strings.containsIgnoreCase(order.status, 'Paid')}" th:text="${order.status}">Processing</span>
+                            <span class="inline-block bg-status-success/10 text-status-success border border-status-success/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.containsIgnoreCase(order.status, 'Shipped') or #strings.containsIgnoreCase(order.status, 'Completed')}" th:text="${order.status}">Shipped</span>
+                            <span class="inline-block bg-status-danger/10 text-status-danger border border-status-danger/20 text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded" th:if="${#strings.containsIgnoreCase(order.status, 'Cancelled')}" th:text="${order.status}">Cancelled</span>
+                        </td>
+                        <td class="py-4 px-6 text-right">
+                            <form th:action="@{/sales/orders/update}" method="post" class="flex items-center justify-end gap-2 m-0">
+                                <input type="hidden" name="id" th:value="${order.id}">
+                                <select name="status" class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-full px-4 py-2 text-xs tracking-widest uppercase text-light-text dark:text-white focus:outline-none focus:border-accent-primary cursor-pointer transition-all appearance-none text-center min-w-[130px]">
+                                    <option value="Pending" th:selected="${order.status == 'Pending' or #strings.containsIgnoreCase(order.status, 'Pending')}">Pending</option>
+                                    <option value="Processing" th:selected="${order.status == 'Processing' or #strings.containsIgnoreCase(order.status, 'Paid')}">Processing</option>
+                                    <option value="Shipped" th:selected="${order.status == 'Shipped'}">Shipped</option>
+                                    <option value="Cancelled" th:selected="${order.status == 'Cancelled'}">Cancelled</option>
+                                </select>
+                                <button type="submit" class="bg-status-success/10 hover:bg-status-success/20 text-status-success border border-status-success/20 text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full transition-colors">
+                                    Update
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="6" class="py-16 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                                <i class="bi bi-receipt text-4xl mb-3 opacity-50"></i>
+                                <p class="text-sm font-light tracking-widest uppercase">No orders received yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
+

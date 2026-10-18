@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.lankathreads.security.SecurityConfigTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.526 s -- in com.lankathreads.security.SecurityConfigTest

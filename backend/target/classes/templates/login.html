@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Lanka Threads | Premium Polo Collection</title>
+    <meta name="description" content="Sign in to Lanka Threads - Sri Lanka's premium polo t-shirt brand. Manage your collection, orders, and operations.">
+    <link rel="icon" type="image/png" th:href="@{/images/logo.png}">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        (function () {
+            var savedTheme = localStorage.getItem('userTheme');
+            var isLight = (savedTheme === 'LIGHT');
+            if (isLight) {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light-mode');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#0a0a0a', card: '#141414', border: 'rgba(255, 255, 255, 0.08)' },
+                        light: { bg: '#EAECEF', card: '#FFFFFF', text: '#0F172A' },
+                        polo: { gold: '#C9A96E', goldDark: '#A67C1E', goldLight: '#E5CCA0', navy: '#1B2A4A' }
+                    },
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        serif: ['Sora', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-snap-type: y proximity;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        html.light-mode body {
+            background-color: #EAECEF;
+            color: #0F172A;
+        }
+
+        /* ── Scroll Sections ── */
+        .scroll-section {
+            min-height: 100vh;
+            scroll-snap-align: start;
+        }
+
+        /* ── Hero Section ── */
+        .hero-section {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .hero-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.55;
+            transition: transform 0.5s ease-out;
+        }
+
+        html.light-mode .hero-bg img { opacity: 0.45; }
+
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(10,10,10,0.72);
+            z-index: 1;
+        }
+
+        html.light-mode .hero-bg::after {
+            background: rgba(248,250,252,0.78);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 800px;
+            padding: 0 2rem;
+        }
+
+        /* ── Scroll Indicator ── */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            animation: gentleBounce 2.5s ease-in-out infinite;
+        }
+
+        @keyframes gentleBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        .scroll-line {
+            width: 1.5px;
+            height: 36px;
+            background: #C9A96E;
+        }
+
+        /* ── Modern Smooth Scroll Reveal Animations ── */
+        .reveal,
+        .reveal-up {
+            opacity: 0;
+            transform: translate3d(0, 36px, 0) scale3d(0.97, 0.97, 1);
+            transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translate3d(-36px, 0, 0) scale3d(0.97, 0.97, 1);
+            transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translate3d(36px, 0, 0) scale3d(0.97, 0.97, 1);
+            transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+
+        .reveal-scale {
+            opacity: 0;
+            transform: translate3d(0, 24px, 0) scale3d(0.93, 0.93, 1);
+            transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+
+        .reveal.active,
+        .reveal-up.active,
+        .reveal-left.active,
+        .reveal-right.active,
+        .reveal-scale.active {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.12s; }
+        .reveal-delay-2 { transition-delay: 0.24s; }
+        .reveal-delay-3 { transition-delay: 0.36s; }
+        .reveal-delay-4 { transition-delay: 0.48s; }
+
+        /* ── Feature Cards ── */
+        .feature-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1.5rem;
+            padding: 2.5rem 2rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        html.light-mode .feature-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(201,169,110,0.5);
+            box-shadow: 0 20px 40px -10px rgba(201,169,110,0.15);
+        }
+
+        html.light-mode .feature-card:hover {
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ── Gallery Section ── */
+        .gallery-img {
+            border-radius: 1.25rem;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.3);
+        }
+
+        html.light-mode .gallery-img {
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
+        }
+
+        .gallery-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gallery-img:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-img::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.58);
+            pointer-events: none;
+        }
+
+        /* ── Login Card ── */
+        .login-card {
+            width: 100%;
+            max-width: 460px;
+            background: rgba(20,20,20,0.85);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 2rem;
+            padding: 2.75rem 2.5rem;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+
+        html.light-mode .login-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0,0,0,0.02);
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 2rem;
+            right: 2rem;
+            height: 2px;
+            background: #C9A96E;
+        }
+
+        /* ── Input Fields ── */
+        .polo-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 0.875rem;
+            padding: 0.875rem 1.25rem;
+            color: #ffffff;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+
+        html.light-mode .polo-input {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            color: #0F172A;
+        }
+
+        .polo-input::placeholder {
+            color: rgba(255,255,255,0.35);
+            font-weight: 400;
+        }
+
+        html.light-mode .polo-input::placeholder {
+            color: #94A3B8;
+        }
+
+        .polo-input:focus {
+            border-color: #C9A96E;
+            box-shadow: 0 0 0 3px rgba(201,169,110,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        html.light-mode .polo-input:focus {
+            background: #FFFFFF;
+            border-color: #C9A96E;
+            box-shadow: 0 0 0 3px rgba(201,169,110,0.25);
+        }
+
+        /* ── Submit Button ── */
+        .polo-btn {
+            width: 100%;
+            padding: 0.9375rem;
+            background: #111827;
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 0.875rem;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        html.light-mode .polo-btn {
+            background: #0F172A;
+            color: #ffffff;
+            border-color: #0F172A;
+        }
+
+        .polo-btn:hover {
+            background: #C9A96E;
+            border-color: #C9A96E;
+            color: #0a0a0a;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -6px rgba(201,169,110,0.4);
+        }
+
+        /* ── Decorative Elements ── */
+        .gold-line {
+            width: 48px;
+            height: 2px;
+            background: #C9A96E;
+        }
+
+        .section-label {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #C9A96E;
+        }
+
+        /* ── Ticker / Marquee ── */
+        .ticker-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .ticker {
+            display: inline-block;
+            animation: ticker 35s linear infinite;
+        }
+
+        @keyframes ticker {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .ticker span {
+            display: inline-block;
+            padding: 0 2rem;
+            font-family: 'Sora', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 400;
+            opacity: 0.15;
+            color: currentColor;
+        }
+
+        html.light-mode .ticker span {
+            opacity: 0.08;
+            color: #0F172A;
+        }
+
+        /* ── Theme Toggle Button ── */
+        .theme-btn {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 1050;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        html.light-mode .theme-btn {
+            background: #FFFFFF;
+            border-color: #E2E8F0;
+            color: #0F172A;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+
+        .theme-btn:hover {
+            background: rgba(201,169,110,0.2);
+            border-color: #C9A96E;
+            color: #C9A96E;
+            transform: scale(1.05);
+        }
+
+        /* ── Stats Counter ── */
+        .stat-number {
+            font-family: 'Sora', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1;
+            background: #C9A96E;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        html.light-mode .stat-number {
+            background: #8B6F47;
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        /* ── Fix Chrome Autofill ── */
+        html.dark input:-webkit-autofill,
+        html.dark input:-webkit-autofill:hover,
+        html.dark input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 30px #141414 inset !important;
+            -webkit-text-fill-color: white !important;
+            caret-color: white !important;
+        }
+
+        html.light-mode input:-webkit-autofill,
+        html.light-mode input:-webkit-autofill:hover,
+        html.light-mode input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 30px #F8FAFC inset !important;
+            -webkit-text-fill-color: #0F172A !important;
+            caret-color: #0F172A !important;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(201,169,110,0.3);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(201,169,110,0.6); }
+
+        /* ═══════════════════════════════════════════════════════════ */
+        /* 60FPS HARDWARE-ACCELERATED ULTRA-SMOOTH ZOOM TRANSITION   */
+        /* ═══════════════════════════════════════════════════════════ */
+        body.hyper-transition-active * {
+            transition: none !important;
+        }
+
+        .login-card {
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            will-change: transform, opacity;
+        }
+
+        .login-card.hyper-zoom-exit {
+            animation: hyperSmoothZoomExit 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            pointer-events: none !important;
+        }
+
+        .hyper-zoom-flash-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            pointer-events: none;
+            opacity: 0;
+            background: rgba(201, 169, 110, 0.18);
+            transform: translate3d(0, 0, 0) scale3d(0.7, 0.7, 1);
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+
+        .hyper-zoom-flash-overlay.active {
+            animation: hyperGlowBurst 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+        }
+
+        @keyframes hyperSmoothZoomExit {
+            0% {
+                opacity: 1;
+                transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0) scale3d(1.8, 1.8, 1);
+            }
+        }
+
+        @keyframes hyperGlowBurst {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0) scale3d(0.7, 0.7, 1);
+            }
+            40% {
+                opacity: 0.8;
+                transform: translate3d(0, 0, 0) scale3d(1.4, 1.4, 1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0) scale3d(2.2, 2.2, 1);
+            }
+        }
+
+        .login-card.hyper-card-error {
+            animation: hyperErrorShake 0.45s cubic-bezier(.36,.07,.19,.97) both;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.35);
+        }
+
+        @keyframes hyperErrorShake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased">
+
+    <!-- Theme Toggle -->
+    <button type="button" onclick="window.toggleLoginTheme()" title="Toggle Theme" class="theme-btn" id="themeToggleBtn">
+        <i class="bi bi-moon-stars text-lg" id="themeToggleIcon"></i>
+    </button>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SECTION 1: HERO - Full Screen Showcase -->
+    <!-- ═══════════════════════════════════════ -->
+    <section class="scroll-section hero-section" id="heroSection">
+        <div class="hero-bg">
+            <img th:src="@{/images/polo-hero.jpg}" alt="Lanka Threads Premium Polo Collection" id="heroBgImg">
+        </div>
+
+        <div class="hero-content">
+            <div class="flex justify-center mb-6 reveal reveal-up">
+                <div class="gold-line"></div>
+            </div>
+
+            <p class="section-label mb-3 reveal reveal-up reveal-delay-1">Est. 2024 · Sri Lanka</p>
+
+            <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 text-slate-900 dark:text-white reveal reveal-up reveal-delay-2"
+                style="line-height: 1.1;">
+                Lanka<br>
+                <span class="font-light italic text-[#C9A96E]">Threads</span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-slate-700 dark:text-slate-300 max-w-md mx-auto font-normal leading-relaxed mb-10 reveal reveal-up reveal-delay-3">
+                Premium polo t-shirts crafted with precision.<br>
+                Where craftsmanship meets modern enterprise.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 reveal reveal-up reveal-delay-4">
+                <!-- Changed 'Explore Collection' to 'Discover Our Craft' with scroll to showcase -->
+                <a href="#showcase"
+                    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md border border-slate-300 dark:border-white/15 text-slate-900 dark:text-white hover:border-[#C9A96E] hover:text-[#C9A96E] transition-all text-xs font-bold tracking-widest uppercase shadow-sm">
+                    <span>Discover Our Craft</span>
+                    <i class="bi bi-arrow-down"></i>
+                </a>
+                <a href="#loginSection"
+                    class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0F172A] dark:bg-[#C9A96E] text-white dark:text-[#0a0a0a] hover:bg-[#C9A96E] hover:text-[#0a0a0a] transition-all text-xs font-bold tracking-widest uppercase shadow-md">
+                    <span>Sign In to Portal</span>
+                    <i class="bi bi-box-arrow-in-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="scroll-indicator text-slate-500 dark:text-white/50 reveal reveal-up reveal-delay-4">
+            <span class="text-[10px] tracking-[0.25em] uppercase font-semibold">Scroll</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TICKER STRIP -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="py-6 border-y border-slate-200 dark:border-white/5 overflow-hidden bg-slate-100/50 dark:bg-white/[0.02] reveal reveal-up">
+        <div class="ticker-wrap">
+            <div class="ticker">
+                <span>Classic Polo</span>
+                <span>·</span>
+                <span>Premium Cotton</span>
+                <span>·</span>
+                <span>Pique Weave</span>
+                <span>·</span>
+                <span>Artisan Crafted</span>
+                <span>·</span>
+                <span>Sri Lankan Heritage</span>
+                <span>·</span>
+                <span>Classic Polo</span>
+                <span>·</span>
+                <span>Premium Cotton</span>
+                <span>·</span>
+                <span>Pique Weave</span>
+                <span>·</span>
+                <span>Artisan Crafted</span>
+                <span>·</span>
+                <span>Sri Lankan Heritage</span>
+                <span>·</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SECTION 2: SHOWCASE - Polo Gallery -->
+    <!-- ═══════════════════════════════════════ -->
+    <section class="py-20 sm:py-28 px-6 sm:px-8 lg:px-16" id="showcase">
+        <div class="max-w-6xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-16 reveal reveal-up">
+                <div class="flex justify-center mb-3">
+                    <div class="gold-line"></div>
+                </div>
+                <p class="section-label mb-2">The Collection</p>
+                <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
+                    Crafted with <span class="font-light italic text-[#C9A96E]">Purpose</span>
+                </h2>
+                <p class="text-elegant-highlight text-sm sm:text-base max-w-xl mx-auto font-normal leading-relaxed">
+                    Every stitch tells a story of precision. Our collection blends world-class Sri Lankan manufacturing 
+                    with timeless polo aesthetics.
+                </p>
+            </div>
+
+            <!-- Gallery Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                <!-- Large Image -->
+                <div class="gallery-img aspect-[4/3] md:aspect-auto md:row-span-2 reveal reveal-left">
+                    <img th:src="@{/images/polo-hero.jpg}" alt="Premium Polo Collection" class="w-full h-full object-cover">
+                    <div class="absolute bottom-6 left-6 z-10 text-white">
+                        <p class="section-label text-[#E5CCA0] mb-1">New Season</p>
+                        <p class="font-serif text-2xl font-semibold">Heritage Series</p>
+                    </div>
+                </div>
+                <!-- Small Image Top -->
+                <div class="gallery-img aspect-[4/3] reveal reveal-right reveal-delay-1">
+                    <img th:src="@{/images/polo-detail.jpg}" alt="Polo Detail" class="w-full h-full object-cover">
+                    <div class="absolute bottom-6 left-6 z-10 text-white">
+                        <p class="section-label text-[#E5CCA0] mb-1">Pique Weave</p>
+                        <p class="font-serif text-xl font-semibold">100% Combed Cotton</p>
+                    </div>
+                </div>
+                <!-- Small Image Bottom -->
+                <div class="gallery-img aspect-[4/3] reveal reveal-right reveal-delay-2">
+                    <img th:src="@{/images/polo-collection.jpg}" alt="Polo Color Range" class="w-full h-full object-cover">
+                    <div class="absolute bottom-6 left-6 z-10 text-white">
+                        <p class="section-label text-[#E5CCA0] mb-1">Color Palette</p>
+                        <p class="font-serif text-xl font-semibold">Vibrant Colorways</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SECTION 3: FEATURES & STATS -->
+    <!-- ═══════════════════════════════════════ -->
+    <section class="py-20 sm:py-28 px-6 sm:px-8 lg:px-16 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-transparent">
+        <div class="max-w-6xl mx-auto">
+            <!-- Stats Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
+                <div class="text-center p-4 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 reveal reveal-up shadow-sm">
+                    <div class="stat-number">500+</div>
+                    <p class="text-elegant-highlight text-xs uppercase tracking-widest mt-2 font-semibold">Products Active</p>
+                </div>
+                <div class="text-center p-4 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 reveal reveal-up reveal-delay-1 shadow-sm">
+                    <div class="stat-number">50+</div>
+                    <p class="text-elegant-highlight text-xs uppercase tracking-widest mt-2 font-semibold">Color Variations</p>
+                </div>
+                <div class="text-center p-4 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 reveal reveal-up reveal-delay-2 shadow-sm">
+                    <div class="stat-number">12K+</div>
+                    <p class="text-elegant-highlight text-xs uppercase tracking-widest mt-2 font-semibold">Satisfied Clients</p>
+                </div>
+                <div class="text-center p-4 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 reveal reveal-up reveal-delay-3 shadow-sm">
+                    <div class="stat-number">99%</div>
+                    <p class="text-elegant-highlight text-xs uppercase tracking-widest mt-2 font-semibold">Quality Rate</p>
+                </div>
+            </div>
+
+            <!-- Feature Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="feature-card reveal reveal-up">
+                    <div class="w-12 h-12 rounded-xl bg-[#C9A96E]/10 flex items-center justify-center mb-6">
+                        <i class="bi bi-scissors text-xl text-[#C9A96E]"></i>
+                    </div>
+                    <h3 class="font-serif text-xl font-bold text-slate-900 dark:text-white mb-2">Expert Craftsmanship</h3>
+                    <p class="text-elegant-highlight text-sm leading-relaxed font-normal">
+                        Precision tailoring with double-stitched hems, reinforced plackets, and mother-of-pearl buttons.
+                    </p>
+                </div>
+                <div class="feature-card reveal reveal-up reveal-delay-1">
+                    <div class="w-12 h-12 rounded-xl bg-[#C9A96E]/10 flex items-center justify-center mb-6">
+                        <i class="bi bi-droplet-half text-xl text-[#C9A96E]"></i>
+                    </div>
+                    <h3 class="font-serif text-xl font-bold text-slate-900 dark:text-white mb-2">Premium Fabrics</h3>
+                    <p class="text-elegant-highlight text-sm leading-relaxed font-normal">
+                        100% combed long-staple cotton pique. Breathable, durable, and color-fast through extensive wash cycles.
+                    </p>
+                </div>
+                <div class="feature-card reveal reveal-up reveal-delay-2">
+                    <div class="w-12 h-12 rounded-xl bg-[#C9A96E]/10 flex items-center justify-center mb-6">
+                        <i class="bi bi-globe-asia-australia text-xl text-[#C9A96E]"></i>
+                    </div>
+                    <h3 class="font-serif text-xl font-bold text-slate-900 dark:text-white mb-2">Made in Sri Lanka</h3>
+                    <p class="text-elegant-highlight text-sm leading-relaxed font-normal">
+                        Proudly manufactured in Sri Lanka, a globally recognized hub for ethical garment production and innovation.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- HYPER-REALISTIC ZOOM-IN TRANSITION FLASH -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="hyperZoomFlash" class="hyper-zoom-flash-overlay"></div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SECTION 4: LOGIN FORM -->
+    <!-- ═══════════════════════════════════════ -->
+    <section class="scroll-section flex items-center justify-center py-20 px-6 relative" id="loginSection">
+        <div class="w-full max-w-md mx-auto relative z-10">
+            
+            <!-- Login Header -->
+            <div class="text-center mb-8 reveal reveal-up">
+                <div class="flex justify-center mb-3">
+                    <div class="gold-line"></div>
+                </div>
+                <p class="section-label mb-2">Portal Access</p>
+                <h2 class="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+                    Welcome Back
+                </h2>
+                <p class="text-elegant-highlight text-sm font-normal">
+                    Sign in to manage your operations &amp; orders.
+                </p>
+            </div>
+
+            <!-- Login Card -->
+            <div class="login-card reveal reveal-scale reveal-delay-1" id="loginCard">
+                
+                <!-- Brand Badge -->
+                <div class="flex items-center justify-center gap-2 mb-6">
+                    <span class="font-serif text-xl font-black tracking-wider text-slate-900 dark:text-white">LANKA</span>
+                    <span class="font-sans text-xl font-light tracking-[0.2em] text-[#C9A96E]">THREADS</span>
+                </div>
+
+                <!-- Alert Messages -->
+                <div id="loginClientError"
+                    class="hidden mb-5 p-3.5 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-xs font-semibold flex items-center gap-2.5 shadow-sm transition-all">
+                    <i class="bi bi-exclamation-octagon text-sm flex-shrink-0"></i>
+                    <span id="loginClientErrorMsg">Invalid username or password. Please try again.</span>
+                </div>
+                <div th:if="${param.error}" id="serverErrorAlert"
+                    class="mb-5 p-3.5 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+                    <i class="bi bi-exclamation-octagon text-sm flex-shrink-0"></i>
+                    <span>Invalid username or password. Please try again.</span>
+                </div>
+                <div th:if="${param.logout}"
+                    class="mb-5 p-3.5 rounded-xl bg-emerald-50 dark:bg-elegant-highlight border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-elegant-highlight text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+                    <i class="bi bi-check2-circle text-sm flex-shrink-0"></i>
+                    <span>You have been logged out successfully.</span>
+                </div>
+                <div th:if="${param.registered}"
+                    class="mb-5 p-3.5 rounded-xl bg-emerald-50 dark:bg-elegant-highlight border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-elegant-highlight text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+                    <i class="bi bi-check2-circle text-sm flex-shrink-0"></i>
+                    <span>Account created successfully! Please sign in below.</span>
+                </div>
+                <div th:if="${param.accountDeleted}"
+                    class="mb-5 p-3.5 rounded-xl bg-amber-50 dark:bg-elegant-highlight border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+                    <i class="bi bi-info-circle text-sm flex-shrink-0"></i>
+                    <span>Your account has been deleted successfully.</span>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" th:action="@{/login}" method="post" class="space-y-4">
+                    <div>
+                        <label for="usernameInput"
+                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                            Username or Email
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="usernameInput" name="username" class="polo-input"
+                                placeholder="Enter username or email" required autofocus autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="passwordInput"
+                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                            Password
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="passwordInput" name="password" class="polo-input"
+                                placeholder="Enter password" required style="padding-right: 2.75rem;" autocomplete="current-password">
+                            <button type="button"
+                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                                onclick="togglePassword()">
+                                <i class="bi bi-eye text-sm" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="flex items-center gap-2 text-xs text-elegant-highlight cursor-pointer font-medium select-none">
+                            <input type="checkbox"
+                                class="rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 w-4 h-4 text-[#C9A96E] focus:ring-[#C9A96E]/30">
+                            <span>Remember me</span>
+                        </label>
+                        <a th:href="@{/support}"
+                            class="text-xs font-semibold text-[#C9A96E] hover:text-[#A67C1E] transition-colors">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" id="loginSubmitBtn" class="polo-btn flex items-center justify-center gap-2 shadow-lg">
+                            <span id="loginSubmitText">Sign In to Lanka Threads</span>
+                            <i id="loginSubmitIcon" class="bi bi-arrow-right text-sm"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Divider -->
+                <div class="flex items-center gap-4 my-6">
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-white/10"></div>
+                    <span class="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest font-bold">or</span>
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-white/10"></div>
+                </div>
+
+                <!-- Bottom Action Links with High Visibility -->
+                <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <a th:href="@{/register}"
+                        class="w-full sm:w-auto text-center px-4 py-2.5 rounded-xl bg-[#C9A96E]/10 hover:bg-[#C9A96E]/20 text-slate-900 dark:text-[#E5CCA0] border border-[#C9A96E]/30 text-xs font-bold tracking-wide transition-all">
+                        <i class="bi bi-person-plus me-1 text-[#C9A96E]"></i> Create Account
+                    </a>
+                    
+                    <a th:href="@{/support}"
+                        class="w-full sm:w-auto text-center px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-semibold transition-all">
+                        <i class="bi bi-headset me-1 text-slate-500 dark:text-slate-400"></i> Contact Support
+                    </a>
+                </div>
+            </div>
+
+            <!-- Trust Badge -->
+            <div class="text-center mt-6 reveal reveal-up reveal-delay-2">
+                <div class="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 text-[11px] font-medium">
+                    <i class="bi bi-shield-check text-[#C9A96E]"></i>
+                    <span>SSL Secured · Enterprise Operations System</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- FOOTER -->
+    <!-- ═══════════════════════════════════════ -->
+    <footer class="py-10 px-6 border-t border-slate-200 dark:border-white/5 text-center bg-slate-50/50 dark:bg-transparent reveal reveal-up">
+        <p class="font-serif text-lg text-slate-700 dark:text-slate-300 font-semibold mb-1">Lanka Threads</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-500 uppercase tracking-widest">&copy; 2024 Lanka Threads Ltd. All Rights Reserved.</p>
+    </footer>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SCRIPTS -->
+    <!-- ═══════════════════════════════════════ -->
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+
+        window.updateThemeIcon = function(isLight) {
+            const icon = document.getElementById('themeToggleIcon');
+            if (!icon) return;
+            if (isLight) {
+                icon.className = 'bi bi-sun-fill text-lg text-elegant-highlight';
+            } else {
+                icon.className = 'bi bi-moon-stars text-lg text-slate-300';
+            }
+        };
+
+        window.applyTheme = function (isLight) {
+            const root = document.documentElement;
+            const body = document.body;
+
+            if (isLight) {
+                root.classList.remove('dark');
+                root.classList.add('light-mode');
+                body.classList.remove('dark');
+                body.classList.add('light-mode');
+                localStorage.setItem('userTheme', 'LIGHT');
+                window.updateThemeIcon(true);
+            } else {
+                root.classList.remove('light-mode');
+                root.classList.add('dark');
+                body.classList.remove('light-mode');
+                body.classList.add('dark');
+                localStorage.setItem('userTheme', 'DARK');
+                window.updateThemeIcon(false);
+            }
+        };
+
+        window.toggleLoginTheme = function () {
+            const icon = document.getElementById('themeToggleIcon');
+            if (icon) {
+                icon.style.transform = 'rotate(360deg) scale(1.3)';
+                setTimeout(() => { icon.style.transform = 'rotate(0deg) scale(1)'; }, 400);
+            }
+            const isCurrentlyLight = document.documentElement.classList.contains('light-mode');
+            window.applyTheme(!isCurrentlyLight);
+        };
+
+        (function () {
+            const savedTheme = localStorage.getItem('userTheme');
+            const isLight = (savedTheme === 'LIGHT');
+            applyTheme(isLight);
+        })();
+
+        // Scroll Reveal
+        function initScrollReveal() {
+            const reveals = document.querySelectorAll('.reveal, .reveal-up, .reveal-left, .reveal-right, .reveal-scale');
+            if (!('IntersectionObserver' in window)) {
+                reveals.forEach(el => el.classList.add('active'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -35px 0px'
+            });
+
+            reveals.forEach(el => observer.observe(el));
+        }
+
+        // Parallax Effect
+        function initParallax() {
+            const heroBg = document.getElementById('heroBgImg');
+            if (!heroBg) return;
+
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                heroBg.style.transform = `translateY(${scrolled * 0.25}px) scale(1.05)`;
+            }, { passive: true });
+        }
+
+        // Smooth Scroll
+        function initSmoothScroll() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    const targetId = this.getAttribute('href');
+                    if (targetId && targetId !== '#') {
+                        const target = document.querySelector(targetId);
+                        if (target) {
+                            e.preventDefault();
+                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+                });
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // HYPER-REALISTIC TRANSITION & CANVAS WARP ENGINE
+        // ═══════════════════════════════════════════════════════════
+        const HyperTransition = (function () {
+            let canvas, ctx;
+            let width, height;
+            let particles = [];
+            let animationFrameId = null;
+            let warpSpeed = 2;
+            let targetWarpSpeed = 2;
+            let isWarping = false;
+
+            // Luxury Web Audio API Harmonic Chime (Synthesized in browser memory)
+            function playHyperSuccessChime() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const ctx = new AudioContext();
+                    if (ctx.state === 'suspended') {
+                        ctx.resume();
+                    }
+
+                    const now = ctx.currentTime;
+                    // Chord frequencies: C5, E5, G5, C6 (Luxury Harmonic Bloom)
+                    const freqs = [523.25, 659.25, 783.99, 1046.50];
+
+                    freqs.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+
+                        gain.gain.setValueAtTime(0, now + idx * 0.05);
+                        gain.gain.linearRampToValueAtTime(0.08, now + idx * 0.05 + 0.04);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.05 + 0.9);
+
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        osc.start(now + idx * 0.05);
+                        osc.stop(now + idx * 0.05 + 1.0);
+                    });
+
+                    // Sub-Bass tactile pulse
+                    const subOsc = ctx.createOscillator();
+                    const subGain = ctx.createGain();
+                    subOsc.type = 'sine';
+                    subOsc.frequency.setValueAtTime(110, now);
+                    subOsc.frequency.exponentialRampToValueAtTime(55, now + 0.5);
+
+                    subGain.gain.setValueAtTime(0.12, now);
+                    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+                    subOsc.connect(subGain);
+                    subGain.connect(ctx.destination);
+
+                    subOsc.start(now);
+                    subOsc.stop(now + 0.7);
+                } catch (e) {
+                    // Audio blocked or unsupported; silent fallback
+                }
+            }
+
+            return {
+                playChime: playHyperSuccessChime
+            };
+        })();
+
+        // ═══════════════════════════════════════════════════════════
+        // LOGIN FORM SUBMISSION INTERCEPTOR & ZOOM-IN TRANSITION FLOW
+        // ═══════════════════════════════════════════════════════════
+        function initLoginFormHandler() {
+            const loginForm = document.getElementById('loginForm');
+            const loginCard = document.getElementById('loginCard');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const submitText = document.getElementById('loginSubmitText');
+            const submitIcon = document.getElementById('loginSubmitIcon');
+            const usernameInput = document.getElementById('usernameInput');
+            const passwordInput = document.getElementById('passwordInput');
+            const clientError = document.getElementById('loginClientError');
+            const clientErrorMsg = document.getElementById('loginClientErrorMsg');
+            const serverErrorAlert = document.getElementById('serverErrorAlert');
+
+            if (!loginForm) return;
+
+            loginForm.addEventListener('submit', function (e) {
+                // Clear previous errors
+                if (clientError) clientError.classList.add('hidden');
+                loginCard.classList.remove('hyper-card-error');
+
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!username || !password) {
+                    e.preventDefault();
+                    showError("Please enter both username and password.");
+                    return;
+                }
+
+                // Show authenticating button state
+                setAuthenticatingState(true);
+                loginCard.classList.add('hyper-card-authenticating');
+            });
+
+            function setAuthenticatingState(isAuth) {
+                if (isAuth) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.9';
+                    submitText.textContent = 'Verifying Credentials...';
+                    submitIcon.className = 'bi bi-arrow-repeat text-sm animate-spin text-[#C9A96E]';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitText.textContent = 'Sign In to Lanka Threads';
+                    submitIcon.className = 'bi bi-arrow-right text-sm';
+                }
+            }
+
+            function showError(msg) {
+                if (clientError && clientErrorMsg) {
+                    clientErrorMsg.textContent = msg;
+                    clientError.classList.remove('hidden');
+                }
+            }
+        }
+
+        function checkLogoutEntranceTransition() {
+            if (sessionStorage.getItem('lanka_logout_transition') === '1' || window.location.search.includes('logout')) {
+                sessionStorage.removeItem('lanka_logout_transition');
+                const card = document.getElementById('loginCard');
+                if (card) {
+                    card.classList.add('hyper-zoom-out-entrance');
+                    setTimeout(() => {
+                        card.classList.remove('hyper-zoom-out-entrance');
+                    }, 600);
+                }
+            }
+        }
+
+        function initPage() {
+            const savedTheme = localStorage.getItem('userTheme');
+            applyTheme(savedTheme === 'LIGHT');
+            initScrollReveal();
+            initParallax();
+            initSmoothScroll();
+            initLoginFormHandler();
+            checkLogoutEntranceTransition();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPage);
+        } else {
+            initPage();
+        }
+    </script>
+</body>
+
+</html>
+
+

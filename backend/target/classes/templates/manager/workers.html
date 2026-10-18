@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Worker Management')}"></head>
+
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+    <div th:replace="~{fragments/layout :: sidebar('workers', 'Factory Manager')}"></div>
+
+    <main class="pt-[140px] pb-16 px-6 lg:px-12 max-w-[1500px] mx-auto min-h-screen flex flex-col">
+        
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-black/10 dark:border-white/10 pb-5 gap-4">
+            <div>
+                <span class="inline-block bg-accent-primary/10 text-accent-primary text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-2">
+                    Manager Portal
+                </span>
+                <h1 class="text-3xl font-extrabold tracking-tight uppercase text-slate-900 dark:text-white">
+                    Worker Management
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 text-xs mt-1 font-medium tracking-widest uppercase">
+                    Manage Factory Personnel &amp; Shifts
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                <!-- View Mode Toggle -->
+                <div class="bg-slate-200/90 dark:bg-slate-800/90 p-1 rounded-xl border border-black/5 dark:border-white/10 flex items-center text-xs font-semibold shadow-inner">
+                    <button id="gridViewBtn" onclick="switchView('grid')" class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold">
+                        <i class="bi bi-grid-fill"></i> Grid
+                    </button>
+                    <button id="tableViewBtn" onclick="switchView('table')" class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                        <i class="bi bi-list-ul"></i> Table
+                    </button>
+                </div>
+
+                <!-- Add New Worker Button (Glowing Blue Gradient) -->
+                <button onclick="openModal('addWorkerModal')"
+                    class="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl px-5 py-2.5 font-bold tracking-wider uppercase text-xs shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2">
+                    <span>ADD NEW WORKER</span>
+                    <i class="bi bi-plus-lg text-sm font-bold"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Alert Notifications -->
+        <div th:if="${success}" class="mb-6 p-4 rounded-2xl bg-green-100/90 dark:bg-emerald-500/10 border border-green-200 dark:border-emerald-500/20 text-green-800 dark:text-emerald-400 text-sm font-medium tracking-wide flex items-center gap-3 animate-fade-in shadow-sm">
+            <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0 text-emerald-500">
+                <i class="bi bi-check2-circle text-xl"></i>
+            </div>
+            <span th:text="${success}">Operation completed successfully.</span>
+        </div>
+        <div th:if="${error}" class="mb-6 p-4 rounded-2xl bg-red-100/90 dark:bg-rose-500/10 border border-red-200 dark:border-rose-500/20 text-red-800 dark:text-rose-400 text-sm font-medium tracking-wide flex items-center gap-3 animate-fade-in shadow-sm">
+            <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0 text-rose-500">
+                <i class="bi bi-exclamation-octagon text-xl"></i>
+            </div>
+            <span th:text="${error}">Error occurred.</span>
+        </div>
+
+        <!-- Stats Overview Cards (Top 3 Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            <!-- Card 1: Total Personnel -->
+            <div class="stats-card bg-white/90 dark:bg-[#141824]/90 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 md:p-5 flex items-center justify-between shadow-soft">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <i class="bi bi-people-fill text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Personnel:</p>
+                    </div>
+                </div>
+                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white" th:text="${totalPersonnel != null ? totalPersonnel : #lists.size(workers)}">
+                    150
+                </div>
+            </div>
+
+            <!-- Card 2: Shifts in Progress -->
+            <div class="stats-card bg-white/90 dark:bg-[#141824]/90 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 md:p-5 flex items-center justify-between shadow-soft">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <i class="bi bi-clock-history text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Shifts in Progress:</p>
+                    </div>
+                </div>
+                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white" th:text="${shiftsInProgress != null ? shiftsInProgress : 8}">
+                    8
+                </div>
+            </div>
+
+            <!-- Card 3: Skills Updated Recently -->
+            <div class="stats-card bg-white/90 dark:bg-[#141824]/90 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 md:p-5 flex items-center justify-between shadow-soft">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                        <i class="bi bi-list-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Skills Updated Recently:</p>
+                    </div>
+                </div>
+                <div class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white" th:text="${skillsUpdatedRecently != null ? skillsUpdatedRecently : 12}">
+                    12
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: WORKER CARDS GRID (WITH VECTOR SVGS) -->
+        <!-- ========================================== -->
+        <div id="workerGridView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div th:each="worker : ${workers}"
+                class="worker-card group relative rounded-2xl p-5 bg-white/95 dark:bg-[#141824]/95 border border-slate-200 dark:border-slate-800/90 hover:border-blue-500/60 dark:hover:border-blue-500/50 hover:shadow-[0_0_25px_rgba(59,130,246,0.18)] transition-all duration-300 flex flex-col justify-between backdrop-blur-xl shadow-sm">
+
+                <!-- Top Info Section -->
+                <div>
+                    <div class="flex items-start gap-3.5 mb-4">
+                        <!-- Vector SVG Worker Avatar -->
+                        <div class="relative flex-shrink-0">
+                            <!-- Male Vector Avatar -->
+                            <img th:if="${worker.gender != 'Female'}"
+                                th:src="@{/images/male-avatar.svg}"
+                                class="w-14 h-14 rounded-2xl object-cover border border-sky-500/30 shadow-md shadow-sky-500/10"
+                                alt="Male Worker">
+                            <!-- Female Vector Avatar -->
+                            <img th:if="${worker.gender == 'Female'}"
+                                th:src="@{/images/female-avatar.svg}"
+                                class="w-14 h-14 rounded-2xl object-cover border border-pink-500/30 shadow-md shadow-pink-500/10"
+                                alt="Female Worker">
+                        </div>
+
+                        <!-- Worker Code, Gender & Name -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-mono font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider" th:text="${worker.workerId}">W002</span>
+                                
+                                <!-- Gender Vector Symbol Badge -->
+                                <span th:if="${worker.gender == 'Female'}" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-pink-500/15 text-pink-500 font-bold text-sm border border-pink-500/30" title="Female">♀</span>
+                                <span th:if="${worker.gender != 'Female'}" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-500/15 text-sky-500 font-bold text-sm border border-sky-500/30" title="Male">♂</span>
+                            </div>
+
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white truncate" th:text="${worker.name}">Kamal Perera</h3>
+
+                            <!-- Badges: Skill + Mobile -->
+                            <div class="flex flex-wrap items-center gap-2 mt-2">
+                                <!-- Dynamic Skill Badge -->
+                                <span th:if="${worker.skill == 'Ironing'}" class="inline-flex items-center gap-1 bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    <i class="bi bi-layers"></i> Ironing
+                                </span>
+                                <span th:if="${worker.skill == 'Packing'}" class="inline-flex items-center gap-1 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    <i class="bi bi-box-seam"></i> Packing
+                                </span>
+                                <span th:if="${worker.skill == 'Checking'}" class="inline-flex items-center gap-1 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border border-yellow-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    <i class="bi bi-search"></i> Checking
+                                </span>
+                                <span th:if="${worker.skill == 'Sewing'}" class="inline-flex items-center gap-1 bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    <i class="bi bi-scissors"></i> Sewing
+                                </span>
+                                <span th:if="${worker.skill == 'Cutting'}" class="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    <i class="bi bi-knife"></i> Cutting
+                                </span>
+                                <span th:if="${worker.skill != 'Ironing' and worker.skill != 'Packing' and worker.skill != 'Checking' and worker.skill != 'Sewing' and worker.skill != 'Cutting'}"
+                                    class="inline-flex items-center gap-1 bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                                    th:text="${worker.skill != null ? worker.skill : 'General'}">General</span>
+
+                                <!-- Mobile Badge with Icon -->
+                                <a th:if="${worker.mobileNumber != null and !worker.mobileNumber.isEmpty()}" 
+                                   th:href="'tel:' + ${worker.mobileNumber}"
+                                   class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full text-xs font-medium hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                                   title="Call Worker">
+                                    <i class="bi bi-telephone-fill text-[10px] text-blue-500"></i>
+                                    <span th:text="${worker.mobileNumber}">+94 77 123 4567</span>
+                                </a>
+                                <span th:if="${worker.mobileNumber == null or worker.mobileNumber.isEmpty()}"
+                                      class="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 text-xs italic">
+                                    <i class="bi bi-telephone"></i> No mobile
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Line and Shift Row -->
+                    <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-slate-400 dark:text-slate-400">Active Line:</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700" th:text="${worker.activeProductionLine}">Line C</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 justify-end">
+                            <span class="text-slate-400 dark:text-slate-400">Shift:</span>
+                            <span th:if="${worker.shift == 'Morning'}" class="font-semibold text-amber-500 flex items-center gap-1">
+                                <i class="bi bi-sun-fill"></i> Morning
+                            </span>
+                            <span th:if="${worker.shift == 'Evening'}" class="font-semibold text-indigo-400 flex items-center gap-1">
+                                <i class="bi bi-moon-stars-fill"></i> Evening
+                            </span>
+                            <span th:if="${worker.shift == 'Night'}" class="font-semibold text-purple-400 flex items-center gap-1">
+                                <i class="bi bi-stars"></i> Night
+                            </span>
+                            <span th:if="${worker.shift != 'Morning' and worker.shift != 'Evening' and worker.shift != 'Night'}" class="font-semibold text-slate-600 dark:text-slate-300" th:text="${worker.shift}">Morning</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Status and Actions Row -->
+                <div class="flex items-center justify-between pt-4 mt-3 border-t border-slate-100 dark:border-slate-800/80">
+                    <!-- Status Badge -->
+                    <span class="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Active
+                    </span>
+
+                    <!-- Action Buttons: Edit and Delete -->
+                    <div class="flex items-center gap-2">
+                        <!-- Edit Button -->
+                        <button th:onclick="'openModal(\'editWorkerModal' + ${worker.id} + '\')'"
+                            class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all duration-200 shadow-sm border border-slate-200 dark:border-slate-700"
+                            title="Edit Worker">
+                            <i class="bi bi-pencil-fill text-xs"></i>
+                        </button>
+
+                        <!-- Delete Button -->
+                        <a th:href="@{/manager/workers/delete/{id}(id=${worker.id})}"
+                            data-confirm="Are you sure you want to delete this worker profile?"
+                            class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all duration-200 shadow-sm border border-slate-200 dark:border-slate-700"
+                            title="Delete Worker">
+                            <i class="bi bi-trash3-fill text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State Grid -->
+            <div th:if="${#lists.isEmpty(workers)}" class="col-span-full py-16 text-center bg-white/50 dark:bg-[#141824]/50 border border-dashed border-slate-300 dark:border-slate-800 rounded-3xl">
+                <div class="flex flex-col items-center justify-center text-slate-400">
+                    <i class="bi bi-people text-5xl mb-3 opacity-40"></i>
+                    <p class="text-sm font-semibold tracking-widest uppercase">No workers found.</p>
+                    <p class="text-xs text-slate-500 mt-1">Click the &quot;Add New Worker&quot; button above to create a profile.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: TABLE VIEW (TOGGLEABLE ALTERNATIVE) -->
+        <!-- ========================================== -->
+        <div id="workerTableView" class="hidden bg-white/95 dark:bg-[#141824]/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-soft overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead>
+                        <tr class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-white/5 text-xs font-bold uppercase tracking-wider">
+                            <th class="py-4 px-6">Avatar</th>
+                            <th class="py-4 px-6">Worker ID</th>
+                            <th class="py-4 px-6">Name</th>
+                            <th class="py-4 px-6">Gender</th>
+                            <th class="py-4 px-6">Mobile Number</th>
+                            <th class="py-4 px-6">Primary Skill</th>
+                            <th class="py-4 px-6">Category</th>
+                            <th class="py-4 px-6">Active Line</th>
+                            <th class="py-4 px-6">Shift</th>
+                            <th class="py-4 px-6 text-center">Status</th>
+                            <th class="py-4 px-6 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                        <tr th:each="worker : ${workers}" class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                            <td class="py-3 px-6">
+                                <img th:if="${worker.gender != 'Female'}" th:src="@{/images/male-avatar.svg}" class="w-8 h-8 rounded-lg object-cover" alt="Male">
+                                <img th:if="${worker.gender == 'Female'}" th:src="@{/images/female-avatar.svg}" class="w-8 h-8 rounded-lg object-cover" alt="Female">
+                            </td>
+                            <td class="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 tracking-wider font-mono" th:text="${worker.workerId}">W001</td>
+                            <td class="py-4 px-6 font-semibold text-slate-800 dark:text-white" th:text="${worker.name}">John Doe</td>
+                            <td class="py-4 px-6 text-xs font-semibold">
+                                <span th:if="${worker.gender == 'Female'}" class="text-pink-500 font-bold">♀ Female</span>
+                                <span th:if="${worker.gender != 'Female'}" class="text-sky-500 font-bold">♂ Male</span>
+                            </td>
+                            <td class="py-4 px-6 font-mono text-xs text-slate-600 dark:text-slate-300" th:text="${worker.mobileNumber != null ? worker.mobileNumber : '-'}">+94 77 123 4567</td>
+                            <td class="py-4 px-6">
+                                <span class="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold px-2.5 py-1 rounded-full" th:text="${worker.skill != null ? worker.skill : 'General'}">Sewing</span>
+                            </td>
+                            <td class="py-4 px-6 text-xs uppercase text-slate-500" th:text="${worker.categoryAssigned}">Men</td>
+                            <td class="py-4 px-6 font-medium text-slate-700 dark:text-slate-300" th:text="${worker.activeProductionLine}">Line A</td>
+                            <td class="py-4 px-6 text-xs uppercase text-slate-500" th:text="${worker.shift}">Morning</td>
+                            <td class="py-4 px-6 text-center">
+                                <span class="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[11px] font-bold px-2 py-0.5 rounded-full">Active</span>
+                            </td>
+                            <td class="py-4 px-6 text-right space-x-2">
+                                <button th:onclick="'openModal(\'editWorkerModal' + ${worker.id} + '\')'"
+                                    class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-blue-500 hover:bg-blue-500 hover:text-white inline-flex items-center justify-center transition-colors">
+                                    <i class="bi bi-pencil-fill text-xs"></i>
+                                </button>
+                                <a th:href="@{/manager/workers/delete/{id}(id=${worker.id})}"
+                                    data-confirm="Are you sure you want to delete this worker profile?"
+                                    class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-rose-500 hover:bg-rose-500 hover:text-white inline-flex items-center justify-center transition-colors">
+                                    <i class="bi bi-trash3-fill text-xs"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODAL 1: ADD NEW WORKER                    -->
+    <!-- ========================================== -->
+    <!-- MODAL 1: ADD NEW WORKER                    -->
+    <!-- ========================================== -->
+    <div id="addWorkerModal"
+        class="fixed inset-0 z-[1060] hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 text-left whitespace-normal animate-fade-in">
+        <div class="bg-white dark:bg-[#161b2a] border border-slate-200 dark:border-slate-700/80 rounded-3xl w-full max-w-2xl shadow-2xl transform transition-all max-h-[92vh] overflow-hidden flex flex-col">
+            <form th:action="@{/manager/workers/add}" method="post" id="addWorkerForm" onsubmit="return validateWorkerForm('addWorkerForm')" class="flex flex-col h-full max-h-[92vh]">
+                <!-- Modal Header -->
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start bg-slate-50/90 dark:bg-white/5">
+                    <div>
+                        <h5 class="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-person-plus-fill text-blue-500"></i> Add New Worker
+                        </h5>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Register a new factory personnel profile with validated mobile number.
+                        </p>
+                    </div>
+                    <button type="button" onclick="closeModal('addWorkerModal')"
+                        class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
+                        <i class="bi bi-x-lg text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body Form -->
+                <div class="overflow-y-auto flex-1 p-6 space-y-5 custom-scrollbar">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        
+                        <!-- Auto-Generated Worker ID -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">Worker ID</label>
+                                <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider bg-blue-500/10 px-2 py-0.5 rounded-full">Auto-Assigned</span>
+                            </div>
+                            <input type="text" name="workerId" th:value="${nextWorkerId}"
+                                th:placeholder="${nextWorkerId != null ? nextWorkerId : 'e.g. W006'}" required readonly
+                                class="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 font-mono font-bold tracking-wider cursor-not-allowed">
+                        </div>
+
+                        <!-- Gender Vector Selector -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Gender Selection</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="flex items-center justify-center gap-2 p-2 rounded-xl border border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    <input type="radio" name="gender" value="Male" checked class="text-blue-600 focus:ring-blue-500">
+                                    <img th:src="@{/images/male-avatar.svg}" class="w-6 h-6 rounded-md" alt="Male">
+                                    <span class="text-xs font-bold text-sky-500">♂ Male</span>
+                                								</label>
+                                <label class="flex items-center justify-center gap-2 p-2 rounded-xl border border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    <input type="radio" name="gender" value="Female" class="text-pink-600 focus:ring-pink-500">
+                                    <img th:src="@{/images/female-avatar.svg}" class="w-6 h-6 rounded-md" alt="Female">
+                                    <span class="text-xs font-bold text-pink-500">♀ Female</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Full Name -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+                                Full Name <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="name" placeholder="e.g. Ruwan Silva" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                        </div>
+
+                        <!-- Mobile Number with Live Validation -->
+                        <div class="md:col-span-2">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+                                    Mobile Number <span class="text-rose-500">*</span>
+                                </label>
+                                <span id="addMobileStatus" class="text-[11px] font-semibold text-slate-400">Sri Lanka format (+94 7X XXX XXXX)</span>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="bi bi-telephone-fill"></i>
+                                </div>
+                                <input type="tel" name="mobileNumber" id="addWorkerMobile"
+                                    placeholder="+94 77 123 4567 or 0771234567" required
+                                    oninput="handleMobileInput(this, 'addMobileStatus')"
+                                    class="w-full pl-10 pr-10 bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                            </div>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-400 mt-1">Supported: <code>0771234567</code>, <code>+94 77 123 4567</code>, <code>+94771234567</code></p>
+                        </div>
+
+                        <!-- Primary Skill -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Primary Skill</label>
+                            <select name="skill"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Ironing">🥌 Ironing</option>
+                                <option value="Packing">📦 Packing</option>
+                                <option value="Checking">🔍 Checking</option>
+                                <option value="Sewing" selected>🪡 Sewing</option>
+                                <option value="Cutting">✂️ Cutting</option>
+                            </select>
+                        </div>
+
+                        <!-- Assigned Category -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Assigned Category</label>
+                            <select name="categoryAssigned"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Men">Men</option>
+                                <option value="Women" selected>Women</option>
+                                <option value="Children">Children</option>
+                            </select>
+                        </div>
+
+                        <!-- Active Production Line -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Active Production Line</label>
+                            <select name="activeProductionLine"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Line A">Line A</option>
+                                <option value="Line B">Line B</option>
+                                <option value="Line C" selected>Line C</option>
+                                <option value="Line D">Line D</option>
+                                <option value="Line E">Line E</option>
+                            </select>
+                        </div>
+
+                        <!-- Shift -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Shift</label>
+                            <select name="shift"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Morning" selected>☀️ Morning Shift</option>
+                                <option value="Evening">🌙 Evening Shift</option>
+                                <option value="Night">🌌 Night Shift</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/90 dark:bg-white/5">
+                    <button type="button" onclick="closeModal('addWorkerModal')"
+                        class="px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl px-6 py-2.5 font-bold tracking-wider uppercase text-xs shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                        Save Worker
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: EDIT WORKER MODALS                -->
+    <!-- ========================================== -->
+    <div th:each="worker : ${workers}" th:id="'editWorkerModal' + ${worker.id}"
+        class="fixed inset-0 z-[1060] hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div class="bg-white dark:bg-[#161b2a] border border-slate-200 dark:border-slate-700/80 rounded-3xl w-full max-w-2xl shadow-2xl transform transition-all max-h-[92vh] flex flex-col overflow-hidden text-left whitespace-normal">
+            <form th:action="@{/manager/workers/update}" method="post" th:id="'editWorkerForm' + ${worker.id}"
+                  th:attr="onsubmit='return validateWorkerForm(\'editWorkerForm' + ${worker.id} + '\')'"
+                  class="flex flex-col h-full max-h-[92vh]">
+                
+                <input type="hidden" name="id" th:value="${worker.id}" />
+                <input type="hidden" name="workerId" th:value="${worker.workerId}" />
+
+                <!-- Edit Header -->
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start bg-slate-50/90 dark:bg-white/5">
+                    <div>
+                        <h5 class="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2"
+                            th:text="${'Edit ' + worker.name}">
+                            Edit Worker
+                        </h5>
+                        <p class="text-xs text-blue-500 font-mono font-bold mt-1 tracking-wider" th:text="${worker.workerId}">W001</p>
+                    </div>
+                    <button type="button" th:onclick="'closeModal(\'editWorkerModal' + ${worker.id} + '\')'"
+                        class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
+                        <i class="bi bi-x-lg text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Edit Body Form -->
+                <div class="overflow-y-auto flex-1 p-6 space-y-5 custom-scrollbar">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        
+                        <!-- Worker ID display -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Worker ID</label>
+                            <input type="text" th:value="${worker.workerId}" readonly disabled
+                                class="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 font-mono font-bold tracking-wider cursor-not-allowed">
+                        </div>
+
+                        <!-- Gender Vector Selector -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Gender Selection</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="flex items-center justify-center gap-2 p-2 rounded-xl border border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    <input type="radio" name="gender" value="Male" th:checked="${worker.gender == 'Male' or worker.gender == null}" class="text-blue-600 focus:ring-blue-500">
+                                    <img th:src="@{/images/male-avatar.svg}" class="w-6 h-6 rounded-md" alt="Male">
+                                    <span class="text-xs font-bold text-sky-500">♂ Male</span>
+                                </label>
+                                <label class="flex items-center justify-center gap-2 p-2 rounded-xl border border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    <input type="radio" name="gender" value="Female" th:checked="${worker.gender == 'Female'}" class="text-pink-600 focus:ring-pink-500">
+                                    <img th:src="@{/images/female-avatar.svg}" class="w-6 h-6 rounded-md" alt="Female">
+                                    <span class="text-xs font-bold text-pink-500">♀ Female</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Full Name -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+                                Full Name <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="name" th:value="${worker.name}" required
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                        </div>
+
+                        <!-- Mobile Number with Live Validation -->
+                        <div class="md:col-span-2">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+                                    Mobile Number <span class="text-rose-500">*</span>
+                                </label>
+                                <span th:id="'editMobileStatus' + ${worker.id}" class="text-[11px] font-semibold text-slate-400">Sri Lanka format (+94 7X XXX XXXX)</span>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="bi bi-telephone-fill"></i>
+                                </div>
+                                <input type="tel" name="mobileNumber" th:value="${worker.mobileNumber}" required
+                                    th:oninput="'handleMobileInput(this, \'editMobileStatus' + ${worker.id} + '\')'"
+                                    placeholder="+94 77 123 4567 or 0771234567"
+                                    class="w-full pl-10 pr-10 bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Primary Skill -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Primary Skill</label>
+                            <select name="skill"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Ironing" th:selected="${worker.skill == 'Ironing'}">🥌 Ironing</option>
+                                <option value="Packing" th:selected="${worker.skill == 'Packing'}">📦 Packing</option>
+                                <option value="Checking" th:selected="${worker.skill == 'Checking'}">🔍 Checking</option>
+                                <option value="Sewing" th:selected="${worker.skill == 'Sewing'}">🪡 Sewing</option>
+                                <option value="Cutting" th:selected="${worker.skill == 'Cutting'}">✂️ Cutting</option>
+                            </select>
+                        </div>
+
+                        <!-- Assigned Category -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Assigned Category</label>
+                            <select name="categoryAssigned"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Men" th:selected="${worker.categoryAssigned == 'Men'}">Men</option>
+                                <option value="Women" th:selected="${worker.categoryAssigned == 'Women'}">Women</option>
+                                <option value="Children" th:selected="${worker.categoryAssigned == 'Children'}">Children</option>
+                            </select>
+                        </div>
+
+                        <!-- Active Production Line -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Active Production Line</label>
+                            <select name="activeProductionLine"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Line A" th:selected="${worker.activeProductionLine == 'Line A'}">Line A</option>
+                                <option value="Line B" th:selected="${worker.activeProductionLine == 'Line B'}">Line B</option>
+                                <option value="Line C" th:selected="${worker.activeProductionLine == 'Line C'}">Line C</option>
+                                <option value="Line D" th:selected="${worker.activeProductionLine == 'Line D'}">Line D</option>
+                                <option value="Line E" th:selected="${worker.activeProductionLine == 'Line E'}">Line E</option>
+                            </select>
+                        </div>
+
+                        <!-- Shift -->
+                        <div>
+                            <label class="block text-xs font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400 mb-1.5">Shift</label>
+                            <select name="shift"
+                                class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <option value="Morning" th:selected="${worker.shift == 'Morning'}">☀️ Morning</option>
+                                <option value="Evening" th:selected="${worker.shift == 'Evening'}">🌙 Evening</option>
+                                <option value="Night" th:selected="${worker.shift == 'Night'}">🌌 Night</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Footer -->
+                <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/90 dark:bg-white/5">
+                    <button type="button" th:onclick="'closeModal(\'editWorkerModal' + ${worker.id} + '\')'"
+                        class="px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl px-6 py-2.5 font-bold tracking-wider uppercase text-xs shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                        Update Worker
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+
+    <!-- Interactive Script for Views, Modals & Mobile Number Validation -->
+    <script>
+        // Modal Controls
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Auto-open modal if requested via URL param (e.g., from Dashboard)
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('openAdd') === 'true' || params.get('action') === 'add') {
+                    openModal('addWorkerModal');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+        
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        window.onclick = function (event) {
+            if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {
+                event.target.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        };
+
+        // Grid vs Table View Switcher
+        function switchView(mode) {
+            const grid = document.getElementById('workerGridView');
+            const table = document.getElementById('workerTableView');
+            const gridBtn = document.getElementById('gridViewBtn');
+            const tableBtn = document.getElementById('tableViewBtn');
+
+            if (mode === 'grid') {
+                grid.classList.remove('hidden');
+                table.classList.add('hidden');
+                gridBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold';
+                tableBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+            } else {
+                grid.classList.add('hidden');
+                table.classList.remove('hidden');
+                tableBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold';
+                gridBtn.className = 'px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+            }
+        }
+
+        // Mobile Number Validator Function
+        // Checks Sri Lankan mobile format: +94 7X XXX XXXX or 07XXXXXXXX
+        function isValidSriLankanMobile(phone) {
+            if (!phone) return false;
+            const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+            return /^(\+94|94|0)?7[0-9]{8}$/.test(cleaned);
+        }
+
+        function formatSriLankanMobile(phone) {
+            if (!phone) return phone;
+            const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+            if (cleaned.startsWith('+94') && cleaned.length === 12) {
+                return '+94 ' + cleaned.substring(3, 5) + ' ' + cleaned.substring(5, 8) + ' ' + cleaned.substring(8);
+            } else if (cleaned.startsWith('94') && cleaned.length === 11) {
+                return '+94 ' + cleaned.substring(2, 4) + ' ' + cleaned.substring(4, 7) + ' ' + cleaned.substring(7);
+            } else if (cleaned.startsWith('0') && cleaned.length === 10) {
+                return '+94 ' + cleaned.substring(1, 3) + ' ' + cleaned.substring(3, 6) + ' ' + cleaned.substring(6);
+            } else if (cleaned.length === 9 && cleaned.startsWith('7')) {
+                return '+94 ' + cleaned.substring(0, 2) + ' ' + cleaned.substring(2, 5) + ' ' + cleaned.substring(5);
+            }
+            return phone;
+        }
+
+        // Realtime Mobile Input Handler
+        function handleMobileInput(inputEl, statusId) {
+            const statusEl = document.getElementById(statusId);
+            const val = inputEl.value.trim();
+            
+            if (!val) {
+                inputEl.classList.remove('border-emerald-500', 'border-rose-500', 'focus:border-emerald-500', 'focus:border-rose-500');
+                if (statusEl) {
+                    statusEl.textContent = 'Sri Lanka format (+94 7X XXX XXXX)';
+                    statusEl.className = 'text-[11px] font-semibold text-slate-400';
+                }
+                return;
+            }
+
+            if (isValidSriLankanMobile(val)) {
+                inputEl.classList.remove('border-rose-500', 'focus:border-rose-500');
+                inputEl.classList.add('border-emerald-500', 'focus:border-emerald-500');
+                if (statusEl) {
+                    statusEl.textContent = '✓ Valid mobile number';
+                    statusEl.className = 'text-[11px] font-bold text-emerald-500';
+                }
+            } else {
+                inputEl.classList.remove('border-emerald-500', 'focus:border-emerald-500');
+                inputEl.classList.add('border-rose-500', 'focus:border-rose-500');
+                if (statusEl) {
+                    statusEl.textContent = '✗ Invalid format (e.g. 0771234567 or +94 77 123 4567)';
+                    statusEl.className = 'text-[11px] font-bold text-rose-500';
+                }
+            }
+        }
+
+        // Auto format mobile on blur
+        document.addEventListener('focusout', function(e) {
+            if (e.target && e.target.name === 'mobileNumber') {
+                if (isValidSriLankanMobile(e.target.value)) {
+                    e.target.value = formatSriLankanMobile(e.target.value);
+                }
+            }
+        });
+
+        // Form Submission Validation Guard
+        function validateWorkerForm(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return true;
+            
+            const mobileInput = form.querySelector('input[name="mobileNumber"]');
+            if (mobileInput && mobileInput.value.trim()) {
+                if (!isValidSriLankanMobile(mobileInput.value)) {
+                    alert('Please enter a valid Sri Lankan mobile number (e.g., +94 77 123 4567 or 0771234567).');
+                    mobileInput.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Supervisor Dashboard')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('dashboard', 'Production Supervisor')}"></div>
+
+<main class="pt-[150px] pb-12 px-4 lg:px-8 max-w-[1500px] mx-auto min-h-screen">
+    <!-- Header with Live Status & Shift Overview -->
+    <div class="flex flex-col gap-4 mb-6 animate-fade-up">
+        <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-5">
+            <div class="max-w-4xl">
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <span class="inline-flex items-center gap-2 bg-accent-primary/10 text-accent-primary text-[11px] font-bold tracking-[0.25em] uppercase px-3.5 py-1.5 rounded-full border border-accent-primary/25">
+                        <i class="bi bi-shield-check"></i> Supervisor Operations Hub
+                    </span>
+                    <span class="inline-flex items-center gap-2 bg-elegant-highlight text-slate-600 dark:text-gray-300 text-[11px] font-semibold tracking-[0.22em] uppercase px-3.5 py-1.5 rounded-full border border-emerald-500/25">
+                        <span class="live-pulse-dot"></span> Live Shift Active
+                    </span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-light tracking-tight uppercase text-slate-900 dark:text-white">
+                    PRODUCTION <span class="font-bold gradient-text-gold">SCHEDULING</span>
+                </h1>
+                <p class="mt-1 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-6 max-w-3xl uppercase tracking-wider">
+                    Real-time monitoring of assembly lines, active floor crews, target progress, and machine downtime
+                </p>
+            </div>
+            
+            <!-- Shift & Supervisor Desk Widgets -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full xl:w-auto">
+                <div class="rounded-2xl border border-blue-500/20 bg-elegant-highlight dark:bg-elegant-highlight px-4 py-3 hover-lift-sm">
+                    <div class="text-[10px] uppercase tracking-[0.24em] text-slate-600 dark:text-gray-300 font-bold">Shift Schedule</div>
+                    <div class="mt-0.5 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <i class="bi bi-clock text-elegant-highlight"></i> Active Shift
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Floor in Rotation</div>
+                </div>
+                <div class="rounded-2xl border border-amber-500/20 bg-elegant-highlight dark:bg-elegant-highlight px-4 py-3 hover-lift-sm">
+                    <div class="text-[10px] uppercase tracking-[0.24em] text-slate-600 dark:text-gray-300 font-bold">Duty Supervisor</div>
+                    <div class="mt-0.5 text-sm font-bold text-slate-900 dark:text-white truncate" th:text="${supervisorName != null ? supervisorName : 'Production Desk'}">Production Desk</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Factory Floor Lead</div>
+                </div>
+                <div class="rounded-2xl border border-emerald-500/20 bg-elegant-highlight dark:bg-elegant-highlight px-4 py-3 hover-lift-sm">
+                    <div class="text-[10px] uppercase tracking-[0.24em] text-slate-600 dark:text-gray-300 font-bold">Telemetry</div>
+                    <div class="mt-0.5 text-sm font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1">
+                        <i class="bi bi-check2-circle"></i> Synced Live
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Automated Feeds</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 Colorful Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            
+            <!-- Active Lines (Electric Blue) -->
+            <div class="dash-card-blue hover-lift rounded-3xl p-5 shadow-sm stagger-1">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-[10px] uppercase tracking-[0.24em] text-slate-600 dark:text-gray-300 font-bold">Active Lines</div>
+                        <div class="mt-2 text-3xl font-black text-slate-600 dark:text-gray-300" th:text="${activeLinesCount != null ? activeLinesCount : '0'}">0</div>
+                        <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">Operational assembly tracks</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-blue flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workforce (Emerald) -->
+            <div class="dash-card-emerald hover-lift rounded-3xl p-5 shadow-sm stagger-2">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-[10px] uppercase tracking-[0.24em] text-slate-600 dark:text-gray-300 font-bold">Floor Workforce</div>
+                        <div class="mt-2 text-3xl font-black text-slate-600 dark:text-gray-300" th:text="${totalWorkers != null ? totalWorkers : '0'}">0</div>
+                        <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">Scheduled active workers</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-emerald flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Progress (Amber / Gold) -->
+            <div class="dash-card-amber hover-lift rounded-3xl p-5 shadow-sm stagger-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-[10px] uppercase tracking-[0.24em] text-slate-600 dark:text-gray-300 font-bold">Target Progress</div>
+                        <div class="mt-2 text-3xl font-black text-slate-600 dark:text-gray-300" th:text="${overallEfficiency != null ? overallEfficiency + '%' : '0%'}">0%</div>
+                        <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 font-medium" th:text="${totalActual != null ? totalActual : '0'} + ' produced of ' + ${totalTarget != null ? totalTarget : '0'} + ' target'">0 of 0 done</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-amber flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exceptions / Downtime (Rose) -->
+            <div class="dash-card-rose hover-lift rounded-3xl p-5 shadow-sm stagger-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-[10px] uppercase tracking-[0.24em] text-rose-600 dark:text-rose-400 font-bold">Downtime Issues</div>
+                        <div class="mt-2 text-3xl font-black text-rose-600 dark:text-rose-400" th:text="${exceptionCount != null ? #numbers.formatInteger(exceptionCount,2) : '00'}">00</div>
+                        <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">Active machine or line halts</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-rose flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-exclamation-octagon-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        
+        <!-- Active Production Lines Matrix (Left 2 cols) -->
+        <div class="xl:col-span-2 bg-white dark:bg-dark-card/80 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-3xl shadow-sm overflow-hidden hover-lift stagger-5">
+            <div class="p-5 border-b border-black/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl icon-badge-blue flex items-center justify-center text-base font-bold">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                            Active Assembly Lines
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Track stage throughput, assigned workforce, and real-time efficiency</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                    <span class="px-2.5 py-1 rounded-full bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/25">On Track</span>
+                    <span class="px-2.5 py-1 rounded-full bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-amber-500/25">Watch</span>
+                    <span class="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25">Alert</span>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm min-w-[850px]">
+                    <thead>
+                        <tr>
+                            <th class="py-3.5 px-5 font-bold tracking-[0.16em] uppercase text-[10px]">Line ID</th>
+                            <th class="py-3.5 px-5 font-bold tracking-[0.16em] uppercase text-[10px]">Category & Stage</th>
+                            <th class="py-3.5 px-5 font-bold tracking-[0.16em] uppercase text-[10px]">Shift State</th>
+                            <th class="py-3.5 px-5 font-bold tracking-[0.16em] uppercase text-[10px] text-right">Target</th>
+                            <th class="py-3.5 px-5 font-bold tracking-[0.16em] uppercase text-[10px]">Completed & Progress</th>
+                            <th class="py-3.5 px-5 font-bold tracking-[0.16em] uppercase text-[10px] text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-black/5 dark:divide-white/5 align-middle font-medium">
+                        <tr th:each="log : ${logs}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                            <td class="py-3.5 px-5 font-black text-accent-primary tracking-widest text-sm" th:text="${log.productionLine}">L-01</td>
+                            <td class="py-3.5 px-5">
+                                <div class="font-bold text-slate-900 dark:text-white" th:text="${log.category} + ' Polo'">Men's Polo</div>
+                                <div class="text-xs text-slate-600 dark:text-gray-300 font-semibold mt-0.5">
+                                    <i class="bi bi-arrow-right-short"></i> <span th:text="${log.wipStage}">Cut and sew</span>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-5">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-elegant-highlight border border-blue-500/25 text-slate-600 dark:text-gray-300 text-[11px] font-bold uppercase tracking-wider">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Active Run
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-5 text-right font-bold text-slate-900 dark:text-white" th:text="${log.targetQuantity}">1,000</td>
+                            <td class="py-3.5 px-5" th:with="eff=${log.targetQuantity > 0 ? (log.quantityProduced * 100) / log.targetQuantity : 0}">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-black text-slate-900 dark:text-white text-sm" th:text="${log.quantityProduced}">820</span>
+                                    <div class="flex-1 h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden max-w-[120px]">
+                                        <div class="h-full rounded-full bg-gradient-to-r" th:style="'width: ' + ${eff} + '%'"
+                                            th:classappend="${eff >= 80 ? 'from-emerald-500 to-teal-400' : (eff >= 50 ? 'from-amber-500 to-orange-400' : 'from-rose-500 to-red-400')}"></div>
+                                    </div>
+                                    <span class="text-xs font-bold" th:text="${eff} + '%'"
+                                        th:classappend="${eff >= 80 ? 'text-slate-600 dark:text-gray-300' : (eff >= 50 ? 'text-slate-600 dark:text-gray-300' : 'text-rose-600 dark:text-rose-400')}">
+                                        82%
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-5 text-center" th:with="eff=${log.targetQuantity > 0 ? (log.quantityProduced * 100) / log.targetQuantity : 0}">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                                    th:classappend="${eff >= 80 ? 'bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/25' : (eff >= 50 ? 'bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-amber-500/25' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25')}">
+                                    <span class="w-2 h-2 rounded-full" th:classappend="${eff >= 80 ? 'bg-emerald-500' : (eff >= 50 ? 'bg-amber-500' : 'bg-rose-500')}"></span>
+                                    <span th:text="${eff >= 80 ? 'On track' : (eff >= 50 ? 'Watch' : 'Need help')}">On track</span>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(logs)}">
+                            <td colspan="6" class="py-12 text-center text-gray-400 uppercase tracking-widest text-xs font-semibold">No active production runs logged</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="border-t border-black/10 dark:border-white/10 bg-black/3 dark:bg-white/5 p-4" th:if="${not #lists.isEmpty(logs)}">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="rounded-2xl border border-indigo-500/20 bg-elegant-highlight px-4 py-3">
+                        <div class="text-[10px] uppercase tracking-[0.22em] text-slate-600 dark:text-gray-300 font-bold">Total Active Runs</div>
+                        <div class="mt-1 font-black text-slate-900 dark:text-white text-base" th:text="${#lists.size(logs)} + ' lines active'">0 lines active</div>
+                    </div>
+                    <div class="rounded-2xl border border-rose-500/20 bg-rose-500/5 px-4 py-3">
+                        <div class="text-[10px] uppercase tracking-[0.22em] text-rose-600 dark:text-rose-400 font-bold">Downtime Reports</div>
+                        <div class="mt-1 font-black text-slate-900 dark:text-white text-base" th:text="${exceptionCount} + ' issues reported'">0 issues reported</div>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-500/20 bg-elegant-highlight px-4 py-3">
+                        <div class="text-[10px] uppercase tracking-[0.22em] text-slate-600 dark:text-gray-300 font-bold">Average Efficiency</div>
+                        <div class="mt-1 font-black text-slate-900 dark:text-white text-base" th:text="${overallEfficiency} + '% floor average'">84% floor average</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column Widgets (Downtime Alerts, Progress Meters, Quick Actions) -->
+        <div class="space-y-6 stagger-6">
+            
+            <!-- Downtime Alerts Widget -->
+            <div class="rounded-3xl border border-black/10 dark:border-white/10 bg-white dark:bg-dark-card/80 backdrop-blur-xl p-5 shadow-sm hover-lift">
+                <div class="flex items-center justify-between pb-3 border-b border-black/10 dark:border-white/10">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg icon-badge-rose flex items-center justify-center text-sm">
+                            <i class="bi bi-bell-fill"></i>
+                        </span>
+                        Downtime Radar
+                    </h3>
+                    <span class="live-pulse-dot-rose"></span>
+                </div>
+                <div class="mt-4 space-y-3">
+                    <div th:each="log : ${downtimeLogs}" class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/25">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="font-bold text-sm text-rose-700 dark:text-rose-400" th:text="${log.productionLine} + ' Halt Reported'">Line L-03 Halt</div>
+                                <p class="mt-1 text-xs text-slate-600 dark:text-slate-300" th:text="'Duration: ' + ${log.downtimeMinutes} + ' mins | Reason: ' + ${log.downtimeReason}">Duration: 15 mins</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-black tracking-widest bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30">Priority</span>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(downtimeLogs)}" class="p-3.5 rounded-2xl bg-elegant-highlight border border-emerald-500/25 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-elegant-highlight flex items-center justify-center text-slate-600 dark:text-gray-300 flex-shrink-0">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs uppercase tracking-wider text-emerald-700 dark:text-elegant-highlight">All Lines Flowing Smoothly</div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Zero active mechanical delays or bottlenecks.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Output & Floor Progress -->
+            <div class="rounded-3xl border border-black/10 dark:border-white/10 bg-white dark:bg-dark-card/80 backdrop-blur-xl p-5 shadow-sm hover-lift">
+                <div class="flex items-center justify-between pb-3 border-b border-black/10 dark:border-white/10">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg icon-badge-emerald flex items-center justify-center text-sm">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </span>
+                        Floor Progress Meters
+                    </h3>
+                </div>
+                <div class="mt-4 space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                            <span class="text-slate-500 dark:text-slate-400 uppercase tracking-wider">Target Output Completed</span>
+                            <span class="text-slate-900 dark:text-white" th:text="${totalActual != null ? totalActual : '0'} + ' / ' + ${totalTarget != null ? totalTarget : '0'}">8,420 / 10,000</span>
+                        </div>
+                        <div class="h-3 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden" th:with="pct=${totalTarget > 0 ? (totalActual * 100) / totalTarget : 0}">
+                            <div class="h-full rounded-full bg-elegant-dark hover:opacity-90 transition-all duration-700" th:style="'width: ' + ${pct} + '%'"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                            <span class="text-slate-500 dark:text-slate-400 uppercase tracking-wider">Operational Lines Efficiency</span>
+                            <span class="text-slate-600 dark:text-gray-300" th:text="${overallEfficiency != null ? overallEfficiency + '%' : '0%'}">84%</span>
+                        </div>
+                        <div class="h-3 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                            <div class="h-full rounded-full bg-elegant-dark hover:opacity-90 transition-all duration-700" th:style="'width: ' + ${overallEfficiency} + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="rounded-3xl border border-black/10 dark:border-white/10 bg-white dark:bg-dark-card/80 backdrop-blur-xl p-5 shadow-sm hover-lift">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2 pb-3 border-b border-black/10 dark:border-white/10">
+                    <span class="w-8 h-8 rounded-lg icon-badge-gold flex items-center justify-center text-sm">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </span>
+                    Supervisor Quick Actions
+                </h3>
+                <div class="mt-4 grid grid-cols-1 gap-2.5">
+                    <a th:href="@{/supervisor/schedule}" class="rounded-2xl p-3 bg-elegant-highlight hover:bg-elegant-highlight border border-amber-500/20 transition-all duration-200 hover-lift-sm flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-elegant-highlight text-slate-600 dark:text-gray-300 flex items-center justify-center text-base">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">Rebalance Workers</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400">Schedule personnel across production lines</div>
+                        </div>
+                    </a>
+                    <a th:href="@{/supervisor/production-log}" class="rounded-2xl p-3 bg-elegant-highlight hover:bg-elegant-highlight border border-blue-500/20 transition-all duration-200 hover-lift-sm flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-elegant-highlight text-slate-600 dark:text-gray-300 flex items-center justify-center text-base">
+                            <i class="bi bi-journal-plus"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">Log Production Run</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400">Record hourly output, WIP stage, and issues</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Registered Suppliers Directory')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('suppliers', 'Supplier Coordination Officer')}"></div>
+
+<main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto min-h-screen flex flex-col space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-black/10 dark:border-white/10 animate-fade-up">
+        <div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-purple-500/25">
+                    <i class="bi bi-building"></i> Vendor Master Registry
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/25">
+                    <span class="live-pulse-dot"></span> Active Supplier Network
+                </span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-light tracking-tight uppercase text-light-text dark:text-white">
+                REGISTERED <span class="font-bold text-[#C9A96E]">SUPPLIERS</span>
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 tracking-widest uppercase">
+                Manage approved textile manufacturers, vendor profiles, and fabric supply channels
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openModal('addVendorModal')"
+                class="bg-elegant-dark hover:opacity-90 text-white font-bold px-5 py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all duration-300 shadow-md hover:shadow-glow hover:-translate-y-0.5 inline-flex items-center">
+                <i class="bi bi-person-plus-fill me-2"></i> Register New Supplier
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${success}" class="p-4 rounded-2xl bg-elegant-highlight border border-emerald-500/30 text-emerald-700 dark:text-elegant-highlight text-sm font-semibold tracking-wide flex items-center gap-3 animate-fade-up shadow-sm">
+        <div class="w-9 h-9 rounded-xl bg-elegant-highlight flex items-center justify-center flex-shrink-0 text-slate-600 dark:text-gray-300 text-base">
+            <i class="bi bi-check2-circle"></i>
+        </div>
+        <span th:text="${success}">Operation completed successfully.</span>
+    </div>
+    <div th:if="${error}" class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-sm font-semibold tracking-wide flex items-center gap-3 animate-fade-up shadow-sm">
+        <div class="w-9 h-9 rounded-xl bg-rose-500/20 flex items-center justify-center flex-shrink-0 text-rose-600 dark:text-rose-400 text-base">
+            <i class="bi bi-exclamation-octagon"></i>
+        </div>
+        <span th:text="${error}">Error occurred.</span>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="dash-card-purple p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-building-check"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Total Suppliers</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-purple-300" th:text="${totalSuppliersCount}">0</h3>
+            </div>
+        </div>
+
+        <div class="dash-card-emerald p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-patch-check"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Active Status</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-emerald-300">100%</h3>
+            </div>
+        </div>
+
+        <div class="dash-card-indigo p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Material Deliveries</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-indigo-300" th:text="${allMaterialsCount}">0</h3>
+            </div>
+        </div>
+
+        <div class="dash-card-amber p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-geo-alt"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">EPZ Supply Hubs</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-amber-300">Western / EPZ</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Master Suppliers Directory Table -->
+    <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-black/5 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/40 dark:bg-white/5">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-building text-elegant-highlight text-lg"></i>
+                <h2 class="text-sm font-bold tracking-widest uppercase text-light-text dark:text-white">Registered Vendors Directory</h2>
+                <span class="text-xs text-slate-600 dark:text-gray-300 bg-elegant-highlight border border-purple-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest font-mono font-bold" th:text="${totalSuppliersCount + ' Vendors'}">3 Vendors</span>
+            </div>
+            <div class="w-full sm:w-64">
+                <input type="text" id="supplierSearchInput" onkeyup="filterSupplierTable()" placeholder="Search suppliers..." 
+                    class="w-full text-xs px-3 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 text-light-text dark:text-white focus:outline-none focus:border-purple-500">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs" id="suppliersTable">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] whitespace-nowrap">Supplier Code</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Company Name</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Contact Info</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Address / Location</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Fabric Type</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-center whitespace-nowrap">Status</th>
+                        <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-right whitespace-nowrap">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-black/5 dark:divide-white/5 font-medium">
+                    <tr th:each="sup : ${registeredSuppliers}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group supplier-row">
+                        <td class="py-2.5 px-3.5 whitespace-nowrap font-mono font-bold text-slate-600 dark:text-gray-300">
+                            <span class="bg-elegant-highlight px-2 py-0.5 rounded-md" th:text="${sup.supplierCode}">SUP-001</span>
+                        </td>
+                        <td class="py-2.5 px-3.5">
+                            <div class="font-bold text-xs uppercase text-light-text dark:text-white flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-elegant-highlight text-slate-600 dark:text-gray-300 flex items-center justify-center text-xs font-bold font-mono flex-shrink-0" th:text="${#strings.substring(sup.name, 0, 1)}">A</div>
+                                <span class="supplier-name" th:text="${sup.name}">Apex Textiles</span>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-3.5 text-gray-500 dark:text-gray-400 text-xs font-mono supplier-contact" th:text="${sup.contactInfo}">0112345678</td>
+                        <td class="py-2.5 px-3.5 text-gray-500 dark:text-gray-400 text-xs supplier-address" th:text="${sup.address != null ? sup.address : 'Colombo, Sri Lanka'}">Biyagama EPZ</td>
+                        <td class="py-2.5 px-3.5">
+                            <span class="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 text-gray-700 dark:text-gray-300 text-[11px] uppercase font-medium" th:text="${sup.fabricTypeSupplied != null ? sup.fabricTypeSupplied : 'Cotton'}">Cotton</span>
+                        </td>
+                        <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1 bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/20 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3.5 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button type="button" th:onclick="'openModal(\'receiveModal_' + ${sup.id} + '\')'" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent-primary/10 text-accent-primary hover:bg-accent-primary hover:text-white text-xs font-bold uppercase tracking-wider transition-all" title="Receive Material from this Vendor">
+                                    <i class="bi bi-box-arrow-in-down"></i> Receive
+                                </button>
+                                <button type="button" th:onclick="'openModal(\'editVendorModal_' + ${sup.id} + '\')'" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-purple-500 hover:text-white transition-all text-xs" title="Edit Vendor">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <a th:href="@{/supplier/supplier/delete/{id}(id=${sup.id})}" onclick="return confirm('Remove this registered supplier from database?')" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white transition-all text-xs" title="Delete Vendor">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(registeredSuppliers)}">
+                        <td colspan="7" class="py-12 text-center text-gray-400 text-xs">
+                            No registered suppliers found in database. Click "Register New Supplier" to add one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Modal: Register New Supplier -->
+<div id="addVendorModal" class="fixed inset-0 z-[1060] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-building text-elegant-highlight text-lg"></i>
+                <h5 class="text-base font-bold uppercase tracking-wider text-light-text dark:text-white">Register New Supplier</h5>
+            </div>
+            <button onclick="closeModal('addVendorModal')" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                <i class="bi bi-x-lg text-lg"></i>
+            </button>
+        </div>
+        <form th:action="@{/supplier/supplier/add}" method="post">
+            <div class="p-6 space-y-4">
+                <div class="p-3 rounded-xl bg-elegant-highlight border border-purple-500/20 flex items-center justify-between">
+                    <span class="text-xs uppercase font-bold text-gray-500 dark:text-gray-400">Assigned Supplier Code</span>
+                    <span class="font-mono font-bold text-sm text-slate-600 dark:text-gray-300" th:text="${nextSupplierCode}">SUP-004</span>
+                    <input type="hidden" name="supplierCode" th:value="${nextSupplierCode}">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Company / Vendor Name *</label>
+                    <input type="text" name="name" required placeholder="e.g. Ceylon Textile Mills" 
+                           class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Contact Info (Phone / Email) *</label>
+                    <input type="text" name="contactInfo" required placeholder="e.g. 0112345678 / sales@ceylontextiles.lk" 
+                           class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Address / EPZ Location</label>
+                    <input type="text" name="address" placeholder="e.g. Biyagama EPZ, Sri Lanka" 
+                           class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Primary Fabric Specialization</label>
+                    <div class="relative">
+                        <select name="fabricTypeSupplied" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500 appearance-none cursor-pointer pr-10">
+                            <option value="" class="dark:bg-[#141414]">Select Primary Fabric Specialization</option>
+                            <option value="Pique Cotton" class="dark:bg-[#141414]">Pique Cotton</option>
+                            <option value="Single Jersey Cotton" class="dark:bg-[#141414]">Single Jersey Cotton</option>
+                            <option value="Interlock Knit" class="dark:bg-[#141414]">Interlock Knit</option>
+                            <option value="Poly-Cotton Blend" class="dark:bg-[#141414]">Poly-Cotton Blend</option>
+                            <option value="Organic Cotton" class="dark:bg-[#141414]">Organic Cotton</option>
+                            <option value="Linen Blend" class="dark:bg-[#141414]">Linen Blend</option>
+                            <option value="Silk Cotton" class="dark:bg-[#141414]">Silk Cotton</option>
+                            <option value="French Terry" class="dark:bg-[#141414]">French Terry</option>
+                            <option value="Mercerized Cotton" class="dark:bg-[#141414]">Mercerized Cotton</option>
+                            <option value="Fleece" class="dark:bg-[#141414]">Fleece</option>
+                            <option value="Spandex Cotton Blend" class="dark:bg-[#141414]">Spandex Cotton Blend</option>
+                        </select>
+                        <i class="bi bi-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-black/10 dark:border-white/10 flex justify-end gap-3 bg-gray-50/50 dark:bg-white/5">
+                <button type="button" onclick="closeModal('addVendorModal')" class="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 text-xs uppercase font-bold text-gray-500 hover:text-light-text dark:hover:text-white transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs uppercase font-bold tracking-wider transition-all shadow-md">
+                    Register Supplier
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modals for Editing Each Vendor & Quick Receive Material -->
+<th:block th:each="sup : ${registeredSuppliers}">
+    <!-- Edit Modal -->
+    <div th:id="'editVendorModal_' + ${sup.id}" class="fixed inset-0 z-[1060] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-pencil-square text-elegant-highlight text-lg"></i>
+                    <h5 class="text-base font-bold uppercase tracking-wider text-light-text dark:text-white">Edit Supplier Details</h5>
+                </div>
+                <button th:onclick="'closeModal(\'editVendorModal_' + ${sup.id} + '\')'" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                    <i class="bi bi-x-lg text-lg"></i>
+                </button>
+            </div>
+            <form th:action="@{/supplier/supplier/update}" method="post">
+                <input type="hidden" name="id" th:value="${sup.id}">
+                <div class="p-6 space-y-4">
+                    <div class="p-3 rounded-xl bg-elegant-highlight border border-purple-500/20 flex items-center justify-between">
+                        <span class="text-xs uppercase font-bold text-gray-500 dark:text-gray-400">Supplier Code</span>
+                        <span class="font-mono font-bold text-sm text-slate-600 dark:text-gray-300" th:text="${sup.supplierCode}">SUP-001</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Company / Vendor Name *</label>
+                        <input type="text" name="name" th:value="${sup.name}" required
+                               class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Contact Info (Phone / Email) *</label>
+                        <input type="text" name="contactInfo" th:value="${sup.contactInfo}" required
+                               class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Address / EPZ Location</label>
+                        <input type="text" name="address" th:value="${sup.address}"
+                               class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Primary Fabric Specialization</label>
+                        <div class="relative">
+                            <select name="fabricTypeSupplied" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-purple-500 appearance-none cursor-pointer pr-10">
+                                <option value="" class="dark:bg-[#141414]">Select Primary Fabric Specialization</option>
+                                <option value="Pique Cotton" th:selected="${sup.fabricTypeSupplied == 'Pique Cotton'}" class="dark:bg-[#141414]">Pique Cotton</option>
+                                <option value="Single Jersey Cotton" th:selected="${sup.fabricTypeSupplied == 'Single Jersey Cotton' || sup.fabricTypeSupplied == 'Single Jersey'}" class="dark:bg-[#141414]">Single Jersey Cotton</option>
+                                <option value="Interlock Knit" th:selected="${sup.fabricTypeSupplied == 'Interlock Knit'}" class="dark:bg-[#141414]">Interlock Knit</option>
+                                <option value="Poly-Cotton Blend" th:selected="${sup.fabricTypeSupplied == 'Poly-Cotton Blend' || sup.fabricTypeSupplied == 'Polyester Cotton Blend'}" class="dark:bg-[#141414]">Poly-Cotton Blend</option>
+                                <option value="Organic Cotton" th:selected="${sup.fabricTypeSupplied == 'Organic Cotton'}" class="dark:bg-[#141414]">Organic Cotton</option>
+                                <option value="Linen Blend" th:selected="${sup.fabricTypeSupplied == 'Linen Blend'}" class="dark:bg-[#141414]">Linen Blend</option>
+                                <option value="Silk Cotton" th:selected="${sup.fabricTypeSupplied == 'Silk Cotton'}" class="dark:bg-[#141414]">Silk Cotton</option>
+                                <option value="French Terry" th:selected="${sup.fabricTypeSupplied == 'French Terry'}" class="dark:bg-[#141414]">French Terry</option>
+                                <option value="Mercerized Cotton" th:selected="${sup.fabricTypeSupplied == 'Mercerized Cotton'}" class="dark:bg-[#141414]">Mercerized Cotton</option>
+                                <option value="Fleece" th:selected="${sup.fabricTypeSupplied == 'Fleece'}" class="dark:bg-[#141414]">Fleece</option>
+                                <option value="Spandex Cotton Blend" th:selected="${sup.fabricTypeSupplied == 'Spandex Cotton Blend'}" class="dark:bg-[#141414]">Spandex Cotton Blend</option>
+                            </select>
+                            <i class="bi bi-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-5 border-t border-black/10 dark:border-white/10 flex justify-end gap-3 bg-gray-50/50 dark:bg-white/5">
+                    <button type="button" th:onclick="'closeModal(\'editVendorModal_' + ${sup.id} + '\')'" class="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 text-xs uppercase font-bold text-gray-500 hover:text-light-text dark:hover:text-white transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs uppercase font-bold tracking-wider transition-all shadow-md">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Receive Modal Prefilled for this Supplier -->
+    <div th:id="'receiveModal_' + ${sup.id}" class="fixed inset-0 z-[1060] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-box-arrow-in-down text-accent-primary text-lg"></i>
+                    <h5 class="text-base font-bold uppercase tracking-wider text-light-text dark:text-white">Receive Fabric: <span th:text="${sup.name}">Supplier</span></h5>
+                </div>
+                <button th:onclick="'closeModal(\'receiveModal_' + ${sup.id} + '\')'" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                    <i class="bi bi-x-lg text-lg"></i>
+                </button>
+            </div>
+            <form th:action="@{/supplier/receive}" method="post">
+                <input type="hidden" name="supplierCode" th:value="${sup.supplierCode}">
+                <input type="hidden" name="supplierName" th:value="${sup.name}">
+                <input type="hidden" name="contactInfo" th:value="${sup.contactInfo}">
+                
+                <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Fabric Type *</label>
+                            <div class="relative">
+                                <select name="fabricType" required class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-accent-primary appearance-none cursor-pointer pr-8">
+                                    <option value="Pique Cotton" th:selected="${sup.fabricTypeSupplied == 'Pique Cotton' || sup.fabricTypeSupplied == null}" class="dark:bg-[#141414]">Pique Cotton</option>
+                                    <option value="Single Jersey Cotton" th:selected="${sup.fabricTypeSupplied == 'Single Jersey Cotton' || sup.fabricTypeSupplied == 'Single Jersey'}" class="dark:bg-[#141414]">Single Jersey Cotton</option>
+                                    <option value="Interlock Knit" th:selected="${sup.fabricTypeSupplied == 'Interlock Knit'}" class="dark:bg-[#141414]">Interlock Knit</option>
+                                    <option value="Poly-Cotton Blend" th:selected="${sup.fabricTypeSupplied == 'Poly-Cotton Blend' || sup.fabricTypeSupplied == 'Polyester Cotton Blend'}" class="dark:bg-[#141414]">Poly-Cotton Blend</option>
+                                    <option value="Organic Cotton" th:selected="${sup.fabricTypeSupplied == 'Organic Cotton'}" class="dark:bg-[#141414]">Organic Cotton</option>
+                                    <option value="Linen Blend" th:selected="${sup.fabricTypeSupplied == 'Linen Blend'}" class="dark:bg-[#141414]">Linen Blend</option>
+                                    <option value="Silk Cotton" th:selected="${sup.fabricTypeSupplied == 'Silk Cotton'}" class="dark:bg-[#141414]">Silk Cotton</option>
+                                    <option value="French Terry" th:selected="${sup.fabricTypeSupplied == 'French Terry'}" class="dark:bg-[#141414]">French Terry</option>
+                                    <option value="Mercerized Cotton" th:selected="${sup.fabricTypeSupplied == 'Mercerized Cotton'}" class="dark:bg-[#141414]">Mercerized Cotton</option>
+                                    <option value="Fleece" th:selected="${sup.fabricTypeSupplied == 'Fleece'}" class="dark:bg-[#141414]">Fleece</option>
+                                </select>
+                                <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Colour *</label>
+                            <div class="relative">
+                                <select name="colour" required class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-accent-primary appearance-none cursor-pointer pr-8">
+                                    <option value="Navy Blue" class="dark:bg-[#141414]">Navy Blue</option>
+                                    <option value="Black" class="dark:bg-[#141414]">Black</option>
+                                    <option value="White" class="dark:bg-[#141414]">White</option>
+                                    <option value="Red" class="dark:bg-[#141414]">Red</option>
+                                    <option value="Blue" class="dark:bg-[#141414]">Blue</option>
+                                    <option value="Green" class="dark:bg-[#141414]">Green</option>
+                                    <option value="Yellow" class="dark:bg-[#141414]">Yellow</option>
+                                    <option value="Pink" class="dark:bg-[#141414]">Pink</option>
+                                    <option value="Heather Grey" class="dark:bg-[#141414]">Heather Grey</option>
+                                    <option value="Orange" class="dark:bg-[#141414]">Orange</option>
+                                </select>
+                                <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[10px]"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Quantity (kg) *</label>
+                            <input type="number" step="0.1" min="0.1" name="quantityReceived" required placeholder="500.0" 
+                                   class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-accent-primary">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Price (LKR) *</label>
+                            <input type="number" step="0.01" min="0" name="price" required placeholder="150000.00" 
+                                   class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-accent-primary">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Lot Number</label>
+                            <input type="text" name="lotNumber" placeholder="LOT-204" 
+                                   class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-accent-primary">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Roll Identifier</label>
+                            <input type="text" name="rollNumber" placeholder="R-4020" 
+                                   class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-light-text dark:text-white focus:outline-none focus:border-accent-primary">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-5 border-t border-black/10 dark:border-white/10 flex justify-end gap-3 bg-gray-50/50 dark:bg-white/5">
+                    <button type="button" th:onclick="'closeModal(\'receiveModal_' + ${sup.id} + '\')'" class="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 text-xs uppercase font-bold text-gray-500 hover:text-light-text dark:hover:text-white transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-elegant-dark hover:opacity-90 text-white text-xs uppercase font-bold tracking-wider transition-all shadow-md">
+                        Record Delivery
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>
+
+<script>
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList && event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {
+            event.target.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    };
+
+    function filterSupplierTable() {
+        const input = document.getElementById("supplierSearchInput");
+        const filter = input.value.toLowerCase();
+        const rows = document.querySelectorAll("#suppliersTable tbody tr.supplier-row");
+
+        rows.forEach(row => {
+            const name = row.querySelector(".supplier-name") ? row.querySelector(".supplier-name").textContent.toLowerCase() : "";
+            const contact = row.querySelector(".supplier-contact") ? row.querySelector(".supplier-contact").textContent.toLowerCase() : "";
+            const address = row.querySelector(".supplier-address") ? row.querySelector(".supplier-address").textContent.toLowerCase() : "";
+            
+            if (name.includes(filter) || contact.includes(filter) || address.includes(filter)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+</script>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,4 @@
+com\lankathreads\controller\AuthControllerTest.class
+com\lankathreads\SystemApplicationTests.class
+com\lankathreads\pattern\WorkerRegistrationManagerTest.class
+com\lankathreads\security\SecurityConfigTest.class

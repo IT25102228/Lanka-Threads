@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - Lanka Threads'"></title>
+    <link rel="icon" type="image/png" th:href="@{/images/logo.png}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script th:inline="javascript">
+        (function () {
+            var localTheme = localStorage.getItem('userTheme');
+            var serverTheme = /*[[${user != null ? user.themePreference : (#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null ? #authentication.principal.user.themePreference : null)}]]*/ null;
+            var theme = localTheme || serverTheme || 'DARK';
+            if (theme === 'LIGHT') {
+                document.documentElement.classList.add('light-mode');
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+                document.documentElement.classList.add('dark');
+            }
+
+            if (sessionStorage.getItem('lanka_zoom_transition') === '1') {
+                document.documentElement.classList.add('hyper-zoom-pending');
+            }
+
+            window.updateThemeIcon = function(isLight) {
+                var icons = ['themeToggleIcon', 'customerThemeIcon'];
+                icons.forEach(function (id) {
+                    var icon = document.getElementById(id);
+                    if (icon) {
+                        if (isLight) {
+                            icon.className = 'bi bi-sun-fill text-lg';
+                            icon.style.color = '#F59E0B';
+                        } else {
+                            icon.className = 'bi bi-moon-stars text-lg';
+                            icon.style.color = '';
+                        }
+                    }
+                });
+            };
+
+            window.quickToggleTheme = function() {
+                var icon = document.getElementById('themeToggleIcon') || document.getElementById('customerThemeIcon');
+                if (icon) {
+                    icon.style.transform = 'rotate(360deg) scale(1.4)';
+                    setTimeout(function () {
+                        icon.style.transform = 'rotate(0deg) scale(1)';
+                    }, 500);
+                }
+
+                var isLight = document.documentElement.classList.contains('light-mode');
+                var nextIsDark = isLight;
+
+                if (nextIsDark) {
+                    document.documentElement.classList.remove('light-mode');
+                    document.documentElement.classList.add('dark');
+                    if (document.body) {
+                        document.body.classList.remove('light-mode');
+                        document.body.classList.add('dark');
+                    }
+                    localStorage.setItem('userTheme', 'DARK');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light-mode');
+                    if (document.body) {
+                        document.body.classList.remove('dark');
+                        document.body.classList.add('light-mode');
+                    }
+                    localStorage.setItem('userTheme', 'LIGHT');
+                }
+
+                window.updateThemeIcon(!nextIsDark);
+
+                var canvas = document.getElementById('cinematicCanvas');
+                if (canvas) {
+                    canvas.style.backgroundColor = 'transparent';
+                }
+
+                var toggleInput = document.getElementById('darkModeToggle');
+                if (toggleInput) toggleInput.checked = nextIsDark;
+
+                if (window.Chart) {
+                    Chart.defaults.color = nextIsDark ? '#94A3B8' : '#475569';
+                    Chart.defaults.borderColor = nextIsDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+                }
+
+                fetch('/profile/preferences/toggle', { method: 'POST' }).catch(function (err) { });
+            };
+
+            document.addEventListener("DOMContentLoaded", function () {
+                var isLight = document.documentElement.classList.contains('light-mode');
+                window.updateThemeIcon(isLight);
+            });
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.tailwind = window.tailwind || {};
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#0a0a0a', card: '#141414', border: 'rgba(255, 255, 255, 0.08)' },
+                        light: { bg: '#EAECEF', card: '#FFFFFF', text: '#0F172A' },
+                        'light-bg': '#EAECEF',
+                        'light-card': '#FFFFFF',
+                        'light-text': '#0F172A',
+                        'dark-bg': '#0a0a0a',
+                        'dark-card': '#141414',
+                        polo: { gold: '#8B6F47', goldDark: '#6F5739', goldLight: '#B7A37A', navy: '#334E68' },
+                        'accent-primary': '#334E68',
+                        'accent-primaryHover': '#456576',
+                        'accent-primaryDark': '#253B52',
+                        'accent-secondary': '#8B6F47',
+                        'accent-secondaryLight': '#B7A37A',
+                        'status-success': '#527A63',
+                        'status-danger': '#915C5C'
+                    },
+                    boxShadow: {
+                        'glow': '0 4px 12px rgba(51, 78, 104, 0.16)',
+                        'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03)'
+                    },
+                    transitionTimingFunction: { 'cinematic': 'cubic-bezier(0.4, 0, 0.2, 1)' },
+                    transitionDuration: { '400': '400ms' },
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        serif: ['Sora', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        .group:hover .group-hover\:visible {
+            visibility: visible;
+        }
+
+        .group:hover .group-hover\:opacity-100 {
+            opacity: 1;
+        }
+
+        .group:hover .group-hover\:scale-100 {
+            transform: scale(1);
+        }
+    </style>
+    <script th:src="@{/js/scroll-animation.js}"></script>
+    <script th:src="@{/js/delete-animation.js}"></script>
+</head>
+
+<body class="m-0 p-0 font-sans antialiased selection:bg-[#C9A96E] selection:text-black">
+
+    <!-- Customer Navbar -->
+    <nav th:fragment="navbar"
+        class="app-topbar fixed top-0 left-0 w-full h-[65px] z-[9999] bg-light-bg/90 dark:bg-dark-bg/90 backdrop-blur-xl border-b border-black/10 dark:border-white/10 transition-colors duration-400">
+        <div class="max-w-[1600px] mx-auto px-6 lg:px-12 h-full flex justify-between items-center relative">
+
+            <!-- Left Side: Links -->
+            <div class="flex items-center gap-6 hidden md:flex">
+                <a th:href="@{/customer/shop}"
+                    class="text-light-text dark:text-white text-xs font-semibold tracking-widest uppercase hover:text-accent-primary transition-colors">SHOP</a>
+                <a th:href="@{/customer/shop}"
+                    class="text-slate-600 dark:text-gray-400 text-xs font-semibold tracking-widest uppercase hover:text-accent-primary dark:hover:text-[#C9A96E] transition-colors">COLLECTIONS</a>
+            </div>
+
+            <!-- Center: Logo -->
+            <a th:href="@{/customer/shop}"
+                class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center hover:opacity-90 transition-opacity whitespace-nowrap">
+                <div class="text-2xl md:text-3xl flex items-center gap-2">
+                    <span class="font-serif font-black tracking-wider text-slate-900 dark:text-white">LANKA</span>
+                    <span class="brand-threads-accent font-sans font-bold tracking-[0.22em]">THREADS</span>
+                </div>
+            </a>
+
+            <!-- Right Side: Icons -->
+            <div class="flex items-center gap-3 md:gap-4">
+                <button onclick="quickToggleTheme()" title="Toggle Theme"
+                    class="notification-disc hover:scale-105 transition-all">
+                    <i class="bi bi-moon-stars text-base" id="customerThemeIcon" style="transition: transform 0.5s;"></i>
+                </button>
+
+                <a th:href="@{/customer/cart}"
+                    class="notification-disc hover:scale-105 transition-all relative flex items-center justify-center"
+                    title="Shopping Cart">
+                    <i class="bi bi-cart text-base"></i>
+                    <span
+                        class="absolute -top-1 -right-1 bg-[#C6F135] text-slate-900 text-[10px] font-black px-1.5 py-0.2 rounded-full shadow-[0_0_8px_rgba(198,241,53,0.5)]"
+                        th:text="${cartCount != null ? cartCount : 0}">0</span>
+                </a>
+
+                <div class="relative group ml-1">
+                    <button
+                        class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-all">
+                        <!-- Show Initial if no photo -->
+                        <div th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto == null}"
+                            class="w-8 h-8 rounded-full border border-black/20 dark:border-white/20 flex items-center justify-center font-bold text-xs bg-black/5 dark:bg-white/5">
+                            <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+                        </div>
+                        <!-- Show Photo if exists -->
+                        <img th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto != null}"
+                            th:src="@{'/uploads/profile-photos/' + ${#authentication.principal.user.id} + '/' + ${#authentication.principal.user.profilePhoto}}"
+                            class="w-8 h-8 rounded-full object-cover border border-black/20 dark:border-white/20"
+                            alt="Profile">
+                        <span class="text-xs font-bold tracking-widest uppercase hidden sm:inline-block pr-1"
+                            th:text="${#authentication != null && #authentication.name != 'anonymousUser' ? #authentication.name : 'Customer'}">User</span>
+                    </button>
+
+                    <!-- Dropdown -->
+                    <div
+                        class="profile-dropdown-menu absolute right-0 top-full mt-2 w-64 border border-black/10 dark:border-white/10 rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-[9999] overflow-hidden">
+                        <div class="p-4 border-b border-black/10 dark:border-white/10 flex items-center">
+                            <div class="mr-3">
+                                <div th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto == null}"
+                                    class="w-10 h-10 rounded-full border border-black/20 dark:border-white/20 flex items-center justify-center font-bold text-sm bg-black/5 dark:bg-white/5 text-light-text dark:text-white">
+                                    <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+                                </div>
+                                <img th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto != null}"
+                                    th:src="@{'/uploads/profile-photos/' + ${#authentication.principal.user.id} + '/' + ${#authentication.principal.user.profilePhoto}}"
+                                    class="w-10 h-10 rounded-full object-cover border border-black/20 dark:border-white/20"
+                                    alt="Profile">
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold tracking-widest text-light-text dark:text-white uppercase"
+                                    th:text="${#authentication != null && #authentication.name != 'anonymousUser' ? #authentication.name : 'User'}">User</p>
+                                <p class="text-[10px] text-[#C6F135] font-bold tracking-widest uppercase">Customer</p>
+                            </div>
+                        </div>
+                        <div class="py-2">
+                            <a th:href="@{/profile}"
+                                class="block px-4 py-2 text-xs tracking-widest text-slate-600 dark:text-gray-400 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 uppercase transition-colors"><i
+                                    class="bi bi-person-circle mr-2"></i> Profile</a>
+                            <a th:href="@{/profile/password}"
+                                class="block px-4 py-2 text-xs tracking-widest text-slate-600 dark:text-gray-400 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 uppercase transition-colors"><i
+                                    class="bi bi-key mr-2"></i> Change Password</a>
+                            <a th:href="@{/profile/preferences}"
+                                class="block px-4 py-2 text-xs tracking-widest text-slate-600 dark:text-gray-400 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 uppercase transition-colors"><i
+                                    class="bi bi-sliders mr-2"></i> Preferences</a>
+                        </div>
+                        <div class="py-2 border-t border-black/10 dark:border-white/10">
+                            <form th:action="@{/logout}" method="post" class="m-0">
+                                <button type="submit"
+                                    class="w-full text-left px-4 py-2 text-xs tracking-widest text-status-danger hover:bg-status-danger/10 uppercase transition-colors"><i
+                                        class="bi bi-box-arrow-right mr-2"></i> Log out</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dynamic Role-Based Sidebar & Topbar (Enterprise Portals) -->
+    <div th:fragment="sidebar(activeMenu, roleName)">
+
+        <!-- Top Header -->
+        <nav
+            class="app-topbar fixed top-0 left-0 w-full h-[65px] z-[1030] bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-black/10 dark:border-white/10 transition-colors duration-400">
+            <div class="px-6 h-full flex justify-between items-center max-w-[1600px] mx-auto">
+
+                <!-- Brand -->
+                <a th:href="@{/}"
+                    class="flex items-center hover:opacity-90 transition-opacity whitespace-nowrap">
+                    <div class="text-xl md:text-2xl flex items-center gap-2">
+                        <span class="font-serif font-black tracking-wider text-slate-900 dark:text-white">LANKA</span>
+                        <span class="brand-threads-accent font-sans font-bold tracking-[0.22em]">THREADS</span>
+                    </div>
+                </a>
+
+                <!-- Right side -->
+                <div class="flex items-center gap-3 md:gap-4">
+                    <button onclick="quickToggleTheme()" title="Toggle Theme"
+                        class="notification-disc hover:scale-105 transition-all">
+                        <i class="bi bi-moon-stars text-base" id="themeToggleIcon"
+                            style="transition: transform 0.5s;"></i>
+                    </button>
+
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button type="submit" title="Quick Log Out"
+                            class="notification-disc text-rose-500 hover:text-rose-400 hover:scale-105 transition-all">
+                            <i class="bi bi-box-arrow-right text-base"></i>
+                        </button>
+                    </form>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative group ml-1">
+                        <button
+                            class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-all">
+                            <div
+                                class="w-8 h-8 rounded-full border border-[#C6F135]/60 flex items-center justify-center font-bold text-xs bg-black/5 dark:bg-white/5 text-[#C6F135]">
+                                <!-- Show Initial if no photo -->
+                                <span
+                                    th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto == null}"
+                                    th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+                                <!-- Show Photo if exists -->
+                                <img th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto != null}"
+                                    th:src="@{'/uploads/profile-photos/' + ${#authentication.principal.user.id} + '/' + ${#authentication.principal.user.profilePhoto}}"
+                                    class="w-8 h-8 rounded-full object-cover border border-[#C6F135]/60"
+                                    alt="Profile">
+                            </div>
+                            <span class="text-xs font-bold tracking-widest uppercase hidden md:inline-block pr-1.5"
+                                th:text="${#authentication != null && #authentication.name != 'anonymousUser' ? #authentication.name : 'User'}">User</span>
+                        </button>
+
+                        <!-- Dropdown -->
+                        <div
+                            class="profile-dropdown-menu absolute right-0 top-full mt-2 w-64 border border-black/10 dark:border-white/10 rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-[9999] overflow-hidden">
+                            <div class="p-4 border-b border-black/10 dark:border-white/10 flex items-center">
+                                <div class="mr-3">
+                                    <div th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto == null}"
+                                        class="w-10 h-10 rounded-full border border-[#C6F135]/50 flex items-center justify-center font-bold text-sm bg-black/5 dark:bg-white/5 text-[#C6F135]">
+                                        <span
+                                            th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+                                    </div>
+                                    <img th:if="${#authentication != null && #authentication.name != 'anonymousUser' && #authentication.principal != null && #authentication.principal.user != null && #authentication.principal.user.profilePhoto != null}"
+                                        th:src="@{'/uploads/profile-photos/' + ${#authentication.principal.user.id} + '/' + ${#authentication.principal.user.profilePhoto}}"
+                                        class="w-10 h-10 rounded-full object-cover border border-[#C6F135]/50"
+                                        alt="Profile">
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold tracking-widest text-light-text dark:text-white uppercase"
+                                        th:text="${#authentication != null && #authentication.name != 'anonymousUser' ? #authentication.name : 'User'}">
+                                        User</p>
+                                    <p class="text-[10px] text-[#C6F135] font-bold tracking-widest uppercase"
+                                        th:text="${roleName}">Role</p>
+                                </div>
+                            </div>
+                            <div class="py-2">
+                                <a th:href="@{/profile}"
+                                    class="block px-4 py-2 text-xs tracking-widest text-slate-600 dark:text-gray-400 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 uppercase transition-colors"><i
+                                        class="bi bi-person-circle mr-2"></i> Profile</a>
+                                <a th:href="@{/profile/password}"
+                                    class="block px-4 py-2 text-xs tracking-widest text-slate-600 dark:text-gray-400 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 uppercase transition-colors"><i
+                                        class="bi bi-key mr-2"></i> Change Password</a>
+                                <a th:href="@{/profile/preferences}"
+                                    class="block px-4 py-2 text-xs tracking-widest text-slate-600 dark:text-gray-400 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 uppercase transition-colors"><i
+                                        class="bi bi-sliders mr-2"></i> Preferences</a>
+                            </div>
+                            <div class="py-2 border-t border-black/10 dark:border-white/10">
+                                <form th:action="@{/logout}" method="post" class="m-0">
+                                    <button type="submit"
+                                        class="w-full text-left px-4 py-2 text-xs tracking-widest text-status-danger hover:bg-status-danger/10 uppercase transition-colors"><i
+                                            class="bi bi-box-arrow-right mr-2"></i> Log out</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Secondary Horizontal Navbar -->
+        <nav
+            class="app-section-nav fixed top-[65px] left-0 w-full min-h-[68px] z-[1020] bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-black/10 dark:border-white/10 transition-colors duration-400 overflow-visible">
+            <div class="px-6 py-2 w-full relative max-w-[1600px] mx-auto">
+                <div class="min-h-[48px] w-full overflow-x-auto overflow-y-visible whitespace-nowrap custom-scrollbar flex items-center gap-1 relative"
+                    id="secondaryNavList">
+
+                    <!-- 2D Moving Animation Elements -->
+                    <div class="absolute h-[2px] bottom-0 bg-black dark:bg-white shadow-[0_0_8px_rgba(0,0,0,0.4)] dark:shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all duration-300 ease-cinematic opacity-0 z-[3] pointer-events-none rounded-sm"
+                        id="navSlidingBar"></div>
+
+                    <div class="absolute h-10 top-1/2 -translate-y-1/2 bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/20 rounded-xl backdrop-blur-sm transition-all duration-300 ease-cinematic opacity-0 z-[1] pointer-events-none"
+                        id="navSlidingPill"></div>
+
+                    <!-- Factory Manager Menu -->
+                    <th:block th:if="${roleName == 'Factory Manager' || roleName == 'FACTORY_MANAGER' || roleName == 'FACTORY MANAGER'}">
+                        <a th:href="@{/manager/dashboard}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'dashboard' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-speedometer2 mr-2"></i> Dashboard
+                        </a>
+                        <a th:href="@{/manager/workers}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'workers' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-people-fill mr-2"></i> Manage Workers
+                        </a>
+                    </th:block>
+
+                    <!-- Production Supervisor Menu -->
+                    <th:block th:if="${roleName == 'Production Supervisor' || roleName == 'PRODUCTION_SUPERVISOR' || roleName == 'PRODUCTION SUPERVISOR'}">
+                        <a th:href="@{/supervisor/dashboard}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'dashboard' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-speedometer2 mr-2"></i> Dashboard
+                        </a>
+                        <a th:href="@{/supervisor/production-log}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'production-log' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-journal-text mr-2"></i> Daily Production Log
+                        </a>
+                        <a th:href="@{/supervisor/schedule}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'schedule' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-calendar3 mr-2"></i> Schedule Workers
+                        </a>
+                    </th:block>
+
+                    <!-- Inventory Officer Menu -->
+                    <th:block th:if="${roleName == 'Inventory Officer' || roleName == 'INVENTORY_OFFICER' || roleName == 'INVENTORY OFFICER'}">
+                        <a th:href="@{/inventory/dashboard}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'dashboard' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-speedometer2 mr-2"></i> Dashboard
+                        </a>
+                        <a th:href="@{/inventory/manage}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'manage' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-boxes mr-2"></i> Manage Fabric Stock
+                        </a>
+                    </th:block>
+
+                    <!-- Sales Manager Menu -->
+                    <th:block th:if="${roleName == 'Sales Manager' || roleName == 'SALES_MANAGER' || roleName == 'SALES MANAGER'}">
+                        <a th:href="@{/sales/dashboard}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'dashboard' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-speedometer2 mr-2"></i> Dashboard
+                        </a>
+                        <a th:href="@{/sales/products}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'products' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-tags-fill mr-2"></i> Manage Products & BOM
+                        </a>
+                        <a th:href="@{/sales/orders}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'orders' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-receipt mr-2"></i> Customer Orders
+                        </a>
+                        <a th:href="@{/sales/customers}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'customers' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-person-lines-fill mr-2"></i> Customer Profiles
+                        </a>
+                    </th:block>
+
+                    <!-- Supplier Coordination Officer Menu -->
+                    <th:block th:if="${roleName == 'Supplier Coordination Officer' || roleName == 'SUPPLIER_OFFICER' || roleName == 'SUPPLIER OFFICER'}">
+                        <a th:href="@{/supplier/dashboard}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'dashboard' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-speedometer2 mr-2"></i> Dashboard
+                        </a>
+                        <a th:href="@{/supplier/manage}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'manage' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-box-seam mr-2"></i> Material Intake &amp; POs
+                        </a>
+                        <a th:href="@{/supplier/suppliers}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'suppliers' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-building mr-2"></i> Registered Suppliers
+                        </a>
+                    </th:block>
+
+                    <!-- Customer Menu (If accessing enterprise portal areas) -->
+                    <th:block th:if="${roleName == 'Customer' || roleName == 'CUSTOMER'}">
+                        <a th:href="@{/customer/shop}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'shop' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-bag mr-2"></i> Shop
+                        </a>
+                        <a th:href="@{/customer/cart}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'cart' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-cart mr-2"></i> Cart
+                        </a>
+                        <a th:href="@{/customer/orders}"
+                            class="nav-link relative z-[2] px-4 py-3 mx-1 text-xs font-medium tracking-widest uppercase transition-colors inline-flex items-center rounded-xl"
+                            th:classappend="${activeMenu == 'orders' ? 'text-light-text dark:text-white active' : 'text-gray-500 hover:text-light-text dark:hover:text-white'}">
+                            <i class="bi bi-receipt mr-2"></i> My Orders
+                        </a>
+                    </th:block>
+                </div>
+            </div>
+        </nav>
+        <style>
+            .custom-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+
+            .custom-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        </style>
+    </div>
+
+    <div th:fragment="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script th:src="@{/js/validation.js}"></script>
+        <script>
+            function updateThemeIcon(isLight) {
+                var icons = ['themeToggleIcon', 'customerThemeIcon'];
+                icons.forEach(function (id) {
+                    var icon = document.getElementById(id);
+                    if (icon) {
+                        if (isLight) {
+                            icon.className = 'bi bi-sun-fill text-lg';
+                            icon.style.color = '#F59E0B';
+                        } else {
+                            icon.className = 'bi bi-moon-stars text-lg';
+                            icon.style.color = '';
+                        }
+                    }
+                });
+            }
+
+            function quickToggleTheme() {
+                var icon = document.getElementById('themeToggleIcon') || document.getElementById('customerThemeIcon');
+                if (icon) {
+                    icon.style.transform = 'rotate(360deg) scale(1.4)';
+                    setTimeout(function () {
+                        icon.style.transform = 'rotate(0deg) scale(1)';
+                    }, 500);
+                }
+
+                var isLight = document.documentElement.classList.contains('light-mode');
+                var nextIsDark = isLight;
+
+                if (nextIsDark) {
+                    document.documentElement.classList.remove('light-mode');
+                    document.documentElement.classList.add('dark');
+                    if (document.body) {
+                        document.body.classList.remove('light-mode');
+                        document.body.classList.add('dark');
+                    }
+                    localStorage.setItem('userTheme', 'DARK');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light-mode');
+                    if (document.body) {
+                        document.body.classList.remove('dark');
+                        document.body.classList.add('light-mode');
+                    }
+                    localStorage.setItem('userTheme', 'LIGHT');
+                }
+
+                updateThemeIcon(!nextIsDark);
+
+                var canvas = document.getElementById('cinematicCanvas');
+                if (canvas) {
+                    canvas.style.backgroundColor = 'transparent';
+                }
+
+                var toggleInput = document.getElementById('darkModeToggle');
+                if (toggleInput) toggleInput.checked = nextIsDark;
+
+                if (window.Chart) {
+                    Chart.defaults.color = nextIsDark ? '#94A3B8' : '#475569';
+                    Chart.defaults.borderColor = nextIsDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+                }
+
+                fetch('/profile/preferences/toggle', { method: 'POST' }).catch(function (err) { });
+            }
+
+            window.applyTheme = function (isLight) {
+                if (isLight) {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light-mode');
+                    if (document.body) {
+                        document.body.classList.remove('dark');
+                        document.body.classList.add('light-mode');
+                    }
+                    localStorage.setItem('userTheme', 'LIGHT');
+                } else {
+                    document.documentElement.classList.remove('light-mode');
+                    document.documentElement.classList.add('dark');
+                    if (document.body) {
+                        document.body.classList.remove('light-mode');
+                        document.body.classList.add('dark');
+                    }
+                    localStorage.setItem('userTheme', 'DARK');
+                }
+                updateThemeIcon(isLight);
+                var canvas = document.getElementById('cinematicCanvas');
+                if (canvas) {
+                    canvas.style.backgroundColor = 'transparent';
+                }
+                var toggleInput = document.getElementById('darkModeToggle');
+                if (toggleInput) toggleInput.checked = !isLight;
+                if (window.Chart) {
+                    Chart.defaults.color = isLight ? '#475569' : '#94A3B8';
+                    Chart.defaults.borderColor = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)';
+                }
+            };
+
+            // Global Chart.js Configuration to Match Reference UI
+            if (window.Chart) {
+                var isLightInit = document.documentElement.classList.contains('light-mode');
+                Chart.defaults.font.family = "'Manrope', sans-serif";
+                Chart.defaults.font.size = 11;
+                Chart.defaults.color = isLightInit ? '#475569' : '#94A3B8';
+                Chart.defaults.borderColor = isLightInit ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)';
+                Chart.defaults.plugins.tooltip.backgroundColor = isLightInit ? 'rgba(255, 255, 255, 0.95)' : 'rgba(18, 18, 18, 0.95)';
+                Chart.defaults.plugins.tooltip.titleColor = isLightInit ? '#0F172A' : '#FFFFFF';
+                Chart.defaults.plugins.tooltip.bodyColor = isLightInit ? '#334155' : '#E2E8F0';
+                Chart.defaults.plugins.tooltip.borderColor = isLightInit ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
+                Chart.defaults.plugins.tooltip.borderWidth = 1;
+                Chart.defaults.plugins.tooltip.cornerRadius = 12;
+                Chart.defaults.plugins.tooltip.padding = 10;
+            }
+
+            window.quickToggleTheme = quickToggleTheme;
+            window.updateThemeIcon = updateThemeIcon;
+            window.toggleLoginTheme = quickToggleTheme;
+            window.toggleRegisterTheme = quickToggleTheme;
+
+            document.addEventListener("DOMContentLoaded", function () {
+                var isLight = document.documentElement.classList.contains('light-mode');
+                updateThemeIcon(isLight);
+                if (document.body) {
+                    if (isLight) {
+                        document.body.classList.remove('dark');
+                        document.body.classList.add('light-mode');
+                    } else {
+                        document.body.classList.remove('light-mode');
+                        document.body.classList.add('dark');
+                    }
+                }
+            });
+
+            function initNavSlidingAnimation() {
+                const navList = document.getElementById('secondaryNavList');
+                const pill = document.getElementById('navSlidingPill');
+                const bar = document.getElementById('navSlidingBar');
+
+                if (!navList || !pill || !bar) return;
+
+                const navLinks = navList.querySelectorAll('.nav-link');
+                if (!navLinks.length) return;
+
+                let activeLink = navList.querySelector('.nav-link.active') || navLinks[0];
+
+                function positionElements(targetEl, isHover) {
+                    if (!targetEl) return;
+                    const navRect = navList.getBoundingClientRect();
+                    const targetRect = targetEl.getBoundingClientRect();
+
+                    const left = targetRect.left - navRect.left + navList.scrollLeft;
+                    const width = targetRect.width;
+
+                    bar.style.transform = `translateX(${left}px)`;
+                    bar.style.width = `${width}px`;
+                    bar.style.opacity = '1';
+
+                    pill.style.transform = `translateX(${left}px)`;
+                    pill.style.width = `${width}px`;
+                    pill.style.opacity = isHover ? '1' : (targetEl.classList.contains('active') ? '0.6' : '0.3');
+                }
+
+                setTimeout(function () {
+                    if (activeLink) positionElements(activeLink, false);
+                }, 60);
+
+                navLinks.forEach(function (link) {
+                    link.addEventListener('mouseenter', function () {
+                        positionElements(this, true);
+                    });
+                });
+
+                navList.addEventListener('mouseleave', function () {
+                    if (activeLink) {
+                        positionElements(activeLink, false);
+                    } else {
+                        pill.style.opacity = '0';
+                        bar.style.opacity = '0';
+                    }
+                });
+
+                window.addEventListener('resize', function () {
+                    if (activeLink) positionElements(activeLink, false);
+                });
+                navList.addEventListener('scroll', function () {
+                    if (activeLink) positionElements(activeLink, false);
+                });
+            }
+
+            function initCinematicBackground() {
+                if (document.getElementById('cinematicCanvas')) return;
+
+                const canvas = document.createElement('canvas');
+                canvas.id = 'cinematicCanvas';
+                canvas.setAttribute('hx-preserve', 'true');
+                canvas.style.position = 'fixed';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100vw';
+                canvas.style.height = '100vh';
+                canvas.style.pointerEvents = 'none';
+                canvas.style.zIndex = '-5';
+
+                const updateCanvasBg = () => {
+                    canvas.style.backgroundColor = 'transparent';
+                };
+                updateCanvasBg();
+
+                const observer = new MutationObserver(updateCanvasBg);
+                observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+                document.body.prepend(canvas);
+            }
+
+            // ═══════════════════════════════════════════════════════════
+            // HYPER-REALISTIC ZOOM-IN ENTRANCE (FROM LOGIN)
+            // ═══════════════════════════════════════════════════════════
+            function initDashboardEntranceTransition() {
+                try {
+                    if (sessionStorage.getItem('lanka_zoom_transition') === '1') {
+                        sessionStorage.removeItem('lanka_zoom_transition');
+                        document.documentElement.classList.remove('hyper-zoom-pending');
+
+                        const target = document.body;
+                        if (target) {
+                            target.classList.add('hyper-zoom-entrance');
+                            setTimeout(() => {
+                                target.classList.remove('hyper-zoom-entrance');
+                            }, 650);
+                        }
+                    }
+                } catch (e) {
+                    document.documentElement.classList.remove('hyper-zoom-pending');
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════════
+            // HYPER-REALISTIC LOGOUT ZOOM-OUT TRANSITION
+            // ═══════════════════════════════════════════════════════════
+            function initLogoutTransition() {
+                document.querySelectorAll('form[action$="/logout"], form[action*="/logout"]').forEach(function (form) {
+                    form.addEventListener('submit', function (e) {
+                        if (form.dataset.loggingOut) return;
+                        e.preventDefault();
+                        form.dataset.loggingOut = 'true';
+
+                        sessionStorage.setItem('lanka_logout_transition', '1');
+                        document.body.classList.add('hyper-zoom-out-exit');
+
+                        setTimeout(function () {
+                            form.submit();
+                        }, 440);
+                    });
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () {
+                    initNavSlidingAnimation();
+                    initCinematicBackground();
+                    initDashboardEntranceTransition();
+                    initLogoutTransition();
+                });
+            } else {
+                initNavSlidingAnimation();
+                initCinematicBackground();
+                initDashboardEntranceTransition();
+                initLogoutTransition();
+            }
+        </script>
+    </div>
+
+</body>
+
+</html>

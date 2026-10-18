@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Sales Dashboard')}"></head>
+
+<body
+    class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-300 font-sans min-h-screen antialiased">
+
+    <div th:replace="~{fragments/layout :: sidebar('dashboard', 'Sales Manager')}"></div>
+
+    <main class="pt-[150px] pb-12 px-4 sm:px-6 lg:px-8 max-w-[1500px] mx-auto flex flex-col space-y-6">
+
+        <!-- Header Section -->
+        <div
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-black/10 dark:border-white/10 animate-fade-up">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/25">
+                        <i class="bi bi-graph-up-arrow"></i> Commercial & Sales Hub
+                    </span>
+                    <span
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-amber-500/25">
+                        <span class="live-pulse-dot-amber"></span> Order Flow Active
+                    </span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-light tracking-tight uppercase text-light-text dark:text-white">
+                    SALES & REVENUE <span class="font-bold gradient-text-emerald">OVERVIEW</span>
+                </h1>
+                <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 tracking-widest uppercase">
+                    Commercial transaction ledger, customer fulfillment velocity & order performance
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <a th:href="@{/sales/orders}"
+                    class="bg-elegant-dark hover:opacity-90 text-white font-bold px-5 py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all duration-300 shadow-md hover:shadow-glow hover:-translate-y-0.5 inline-flex items-center">
+                    <i class="bi bi-receipt me-2"></i> Manage All Orders
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Stats Cards (4 Columns) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            <!-- Total Sales (Emerald) -->
+            <div
+                class="dash-card-emerald hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-1">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-widest">Total Sales</span>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-emerald flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-black text-slate-600 dark:text-gray-300" 
+                         th:text="${totalSales != null ? '$' + #numbers.formatDecimal(totalSales, 1, 2) : '$0.00'}">$0.00</div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium" th:text="'Gross value across ' + ${totalOrders} + ' orders'">From 0 orders</span>
+                </div>
+            </div>
+
+            <!-- Total Orders (Gold) -->
+            <div
+                class="dash-card-gold hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-2">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-widest">Total Orders</span>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-gold flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-bag-check"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-black text-slate-600 dark:text-gray-300" th:text="${totalOrders != null ? totalOrders : '0'}">0</div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium">Recorded in transaction log</span>
+                </div>
+            </div>
+
+            <!-- Processing (Amber) -->
+            <div
+                class="dash-card-amber hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-3">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-widest">In Processing</span>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-amber flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-black text-slate-600 dark:text-gray-300" th:text="${processingCount != null ? processingCount : '0'}">0</div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium">Pending dispatch or fulfillment</span>
+                </div>
+            </div>
+
+            <!-- Completed (Cyan / Blue) -->
+            <div
+                class="dash-card-cyan hover-lift rounded-3xl p-6 shadow-sm flex flex-col justify-between stagger-4">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-widest">Dispatched & Done</span>
+                    <div class="w-11 h-11 rounded-2xl icon-badge-cyan flex items-center justify-center text-xl animate-float-slow">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-black text-slate-600 dark:text-gray-300" th:text="${completedCount != null ? completedCount : '0'}">0</div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block font-medium">Successfully delivered to client</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Order Pipeline Ratio Bar -->
+        <div class="bg-white dark:bg-dark-card/80 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-3xl p-5 shadow-sm hover-lift stagger-5"
+            th:with="total=${totalOrders > 0 ? totalOrders : 1}, compPct=${(completedCount * 100) / total}, procPct=${(processingCount * 100) / total}">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-light-text dark:text-white">Order Pipeline Flow Status</span>
+                </div>
+                <div class="flex items-center gap-4 text-xs font-bold">
+                    <span class="text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-cyan-500"></span> <span th:text="${completedCount}">0</span> Shipped
+                    </span>
+                    <span class="text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> <span th:text="${processingCount}">0</span> In Progress
+                    </span>
+                </div>
+            </div>
+            <div class="h-3 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden flex">
+                <div class="h-full bg-elegant-dark hover:opacity-90 transition-all duration-700" th:style="'width: ' + ${compPct} + '%'"></div>
+                <div class="h-full bg-elegant-dark hover:opacity-90 transition-all duration-700" th:style="'width: ' + ${procPct} + '%'"></div>
+                <div class="h-full bg-black/5 dark:bg-white/5 transition-all duration-700" th:style="'width: ' + ${100 - compPct - procPct} + '%'"></div>
+            </div>
+        </div>
+
+        <!-- Main Table Container -->
+        <div
+            class="bg-white dark:bg-dark-card/80 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-3xl shadow-sm overflow-hidden flex-1 flex flex-col hover-lift stagger-6">
+
+            <!-- Controls Bar -->
+            <div
+                class="p-5 border-b border-black/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl icon-badge-emerald flex items-center justify-center text-base">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-gray-900 dark:text-white uppercase tracking-wider">Recent Orders Ledger</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Latest commercial transactions awaiting or under fulfillment</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" id="salesSearch" placeholder="Search orders..."
+                            class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-gray-800 dark:text-white text-xs rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:border-emerald-500 transition w-full sm:w-56 font-medium">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm whitespace-nowrap" id="salesOrdersTable">
+                    <thead>
+                        <tr
+                            class="text-gray-500 dark:text-gray-400 border-b border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 text-xs uppercase tracking-wider">
+                            <th class="py-3.5 px-6 font-bold">Order ID</th>
+                            <th class="py-3.5 px-6 font-bold">Customer</th>
+                            <th class="py-3.5 px-6 font-bold">Date</th>
+                            <th class="py-3.5 px-6 font-bold">Products</th>
+                            <th class="py-3.5 px-6 font-bold text-right">Total Amount</th>
+                            <th class="py-3.5 px-6 font-bold text-center">Fulfillment Status</th>
+                            <th class="py-3.5 px-6 font-bold text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-black/5 dark:divide-white/5 text-gray-700 dark:text-gray-300 font-medium">
+                        <tr th:each="order : ${recentOrders}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-6 font-bold text-accent-primary tracking-widest text-sm" th:text="${order.orderCode != null ? order.orderCode : ('ORD-' + order.id)}">ORD-001</td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-elegant-dark hover:opacity-90 text-white font-black text-xs flex items-center justify-center shadow-sm"
+                                        th:text="${order.customer != null && order.customer.name != null && !order.customer.name.isEmpty() ? #strings.substring(order.customer.name,0,1).toUpperCase() : 'C'}">
+                                        J
+                                    </div>
+                                    <span class="font-bold text-gray-900 dark:text-white" th:text="${order.customer != null ? order.customer.name : 'Guest Customer'}">John Doe</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-gray-500 dark:text-gray-400 text-xs font-semibold" th:text="${order.orderDate != null ? #temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm') : 'N/A'}">2026-07-30</td>
+                            <td class="py-4 px-6">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-black/5 dark:bg-white/5 text-elegant-highlight border border-black/10 dark:border-white/10"
+                                    th:text="${order.orderItems != null ? #lists.size(order.orderItems) : 0} + ' item(s)'">1 item(s)</span>
+                            </td>
+                            <td class="py-4 px-6 text-right font-black text-base text-gray-900 dark:text-white" th:text="${order.totalAmount != null ? '$' + #numbers.formatDecimal(order.totalAmount, 1, 2) : '$0.00'}">$0.00</td>
+                            <td class="py-4 px-6 text-center">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-amber-500/25"
+                                    th:if="${order.status == 'Pending' || order.status == 'Processing'}">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> <span th:text="${order.status}">Processing</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/25"
+                                    th:if="${order.status == 'Shipped'}">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Shipped
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25"
+                                    th:if="${order.status == 'Cancelled'}">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> Cancelled
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-gray-300"
+                                    th:if="${order.status != 'Pending' && order.status != 'Processing' && order.status != 'Shipped' && order.status != 'Cancelled'}"
+                                    th:text="${order.status}">
+                                    Unknown
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                <a th:href="@{/sales/orders}" class="px-3 py-1.5 rounded-xl bg-accent-primary/10 hover:bg-accent-primary text-accent-primary hover:text-white border border-accent-primary/25 text-xs font-bold uppercase tracking-wider transition-all duration-200">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recentOrders)}">
+                            <td colspan="7" class="py-16 text-center text-gray-400 uppercase tracking-widest text-xs font-semibold">No recent orders found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table Footer -->
+            <div
+                class="p-4 border-t border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                <span th:text="'Showing latest ' + ${#lists.size(recentOrders)} + ' of ' + ${totalOrders} + ' total orders'">Showing orders</span>
+                <div class="flex items-center gap-2">
+                    <a th:href="@{/sales/orders}" class="text-slate-600 dark:text-gray-300 hover:text-emerald-700 font-bold uppercase tracking-wider inline-flex items-center">
+                        View All Orders <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <script>
+        document.getElementById('salesSearch')?.addEventListener('keyup', function() {
+            var filter = this.value.toLowerCase();
+            var rows = document.querySelectorAll('#salesOrdersTable tbody tr');
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+
+</html>
+
+

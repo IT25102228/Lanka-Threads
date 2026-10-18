@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Manage Suppliers & Material Receipts')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('manage', 'Supplier Coordination Officer')}"></div>
+
+<main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4 gap-4">
+        <div>
+            <span class="inline-block bg-accent-primary/10 text-accent-primary text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">Supplier Coordination & Intake</span>
+            <h1 class="text-3xl font-light tracking-tight uppercase">Material Receipts & Registered Suppliers</h1>
+            <p class="text-gray-500 text-sm mt-1 tracking-widest uppercase">Track raw fabric intake, quality inspections, and receiving logs</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openModal('addSupplierModal')" class="bg-elegant-dark hover:opacity-90 text-white rounded-full px-6 py-3 font-bold tracking-widest uppercase text-xs hover:-translate-y-0.5 hover:shadow-glow transition-all duration-300 flex items-center shadow-md">
+                <i class="bi bi-box-arrow-in-down me-2 text-sm"></i> Receive Materials
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${success}" class="mb-6 p-4 rounded-2xl bg-green-100/60 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400 text-sm font-medium tracking-wide flex items-center gap-3 animate-fade-in shadow-sm">
+        <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-check2-circle text-green-500 text-lg"></i>
+        </div>
+        <span th:text="${success}">Operation completed successfully.</span>
+    </div>
+    <div th:if="${error}" class="mb-6 p-4 rounded-2xl bg-red-100/60 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-sm font-medium tracking-wide flex items-center gap-3 shadow-sm">
+        <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-exclamation-octagon text-red-500 text-lg"></i>
+        </div>
+        <span th:text="${error}">Error occurred.</span>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="dash-card-indigo p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Total Material Receipts</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-indigo-300" th:text="${#lists.size(receivedMaterials)}">0</h3>
+            </div>
+        </div>
+
+        <div class="dash-card-amber p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Pending Inspection</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-amber-300"
+                    th:text="${#lists.size(receivedMaterials.?[status == 'PENDING_INSPECTION'])}">0</h3>
+            </div>
+        </div>
+
+        <div class="dash-card-emerald p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-patch-check"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Quality Approved</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-emerald-300"
+                    th:text="${#lists.size(receivedMaterials.?[status == 'APPROVED'])}">0</h3>
+            </div>
+        </div>
+
+        <div class="dash-card-purple p-5 rounded-2xl border flex items-center gap-4 hover-lift">
+            <div class="w-12 h-12 rounded-xl bg-elegant-highlight text-elegant-highlight flex items-center justify-center text-2xl flex-shrink-0">
+                <i class="bi bi-building"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Registered Suppliers</p>
+                <h3 class="text-2xl font-bold tracking-tight text-elegant-highlight dark:text-purple-300" th:text="${#lists.size(registeredSuppliers)}">0</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="space-y-8 flex-1 flex flex-col">
+        
+        <!-- Received Materials Intake Matrix Table -->
+        <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-black/5 dark:border-white/10 flex justify-between items-center bg-gray-50/40 dark:bg-white/5">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-box-seam text-accent-primary text-lg"></i>
+                    <h2 class="text-sm font-bold tracking-widest uppercase text-light-text dark:text-white">Received Materials Intake Matrix</h2>
+                </div>
+                <span class="text-xs text-gray-500 uppercase tracking-widest">Live Delivery Registry</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] whitespace-nowrap">Receive ID & PO</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Supplier</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Fabric & Specs</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-right whitespace-nowrap">Qty (kg)</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-right whitespace-nowrap">Cost (LKR)</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-center whitespace-nowrap">Receipt Date</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-center whitespace-nowrap">QA Status</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-right whitespace-nowrap">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-black/5 dark:divide-white/5 font-medium">
+                        <tr th:each="mat : ${receivedMaterials}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                            
+                            <!-- Receipt ID & PO -->
+                            <td class="py-2.5 px-3.5 whitespace-nowrap">
+                                <span class="font-bold text-accent-primary font-mono text-xs bg-accent-primary/10 px-2 py-0.5 rounded-md" th:text="${mat.receiptId}">MR-2026-001</span>
+                                <div class="text-[10px] text-gray-500 font-mono tracking-wider mt-0.5 uppercase" th:text="${mat.poNumber}">PO-2026-001</div>
+                            </td>
+                            
+                            <!-- Supplier Info -->
+                            <td class="py-2.5 px-3.5 min-w-[140px] max-w-[200px]">
+                                <div class="font-bold text-xs uppercase text-light-text dark:text-white leading-tight truncate" th:text="${mat.supplierName}">Lanka Textiles Ltd</div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono tracking-wide mt-0.5 truncate" th:text="${mat.supplierCode + (mat.contactInfo != null ? ' · ' + mat.contactInfo : '')}">SUP-001 · 0112345678</div>
+                            </td>
+                            
+                            <!-- Material Info -->
+                            <td class="py-2.5 px-3.5 min-w-[130px] max-w-[180px]">
+                                <div class="font-semibold text-xs uppercase text-light-text dark:text-white leading-tight truncate" th:text="${mat.fabricType}">Pique Cotton</div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase flex items-center gap-1.5 mt-0.5">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-accent-secondary flex-shrink-0"></span>
+                                    <span th:text="${mat.colour}">Navy Blue</span>
+                                    <span th:if="${mat.lotNumber != null}" class="font-mono bg-black/5 dark:bg-white/10 px-1 py-0.2 rounded text-[9px]" th:text="${mat.lotNumber}">LOT-201</span>
+                                </div>
+                            </td>
+                            
+                            <!-- Quantity -->
+                            <td class="py-2.5 px-3.5 text-right whitespace-nowrap">
+                                <span class="font-bold text-light-text dark:text-white text-xs font-mono" th:text="${mat.quantityReceived}">500.0</span>
+                                <span class="text-[10px] text-gray-400">kg</span>
+                            </td>
+                            
+                            <!-- Value -->
+                            <td class="py-2.5 px-3.5 text-right whitespace-nowrap">
+                                <span class="font-bold text-light-text dark:text-white text-xs font-mono" th:text="${'LKR ' + #numbers.formatDecimal(mat.price, 1, 2)}">LKR 150,000.00</span>
+                            </td>
+                            
+                            <!-- Receipt Date -->
+                            <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400 font-mono inline-flex items-center gap-1">
+                                    <i class="bi bi-calendar3 text-[10px] text-accent-secondary"></i>
+                                    <span th:text="${mat.receivedDate}">2026-09-10</span>
+                                </span>
+                            </td>
+                            
+                            <!-- Status -->
+                            <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
+                                <span th:if="${mat.status == 'PENDING_INSPECTION'}" class="inline-flex items-center gap-1 bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-amber-500/20 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span> Pending
+                                </span>
+                                <span th:if="${mat.status == 'APPROVED'}" class="inline-flex items-center gap-1 bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/20 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shadow-sm">
+                                    <i class="bi bi-check-circle-fill text-[10px]"></i> Quality Approved
+                                </span>
+                                <span th:if="${mat.status == 'REJECTED'}" class="inline-flex items-center gap-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shadow-sm">
+                                    <i class="bi bi-x-circle-fill text-[10px]"></i> Rejected
+                                </span>
+                            </td>
+                            
+                            <!-- Actions -->
+                            <td class="py-2.5 px-3.5 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1">
+                                    <div th:if="${mat.status == 'PENDING_INSPECTION'}" class="inline-flex items-center gap-1 me-1 border-r border-black/10 dark:border-white/10 pr-1.5">
+                                        <form th:action="@{/supplier/inspect}" method="post" class="inline m-0">
+                                            <input type="hidden" name="id" th:value="${mat.id}" />
+                                            <input type="hidden" name="status" value="APPROVED" />
+                                            <input type="hidden" name="redirectPage" value="manage" />
+                                            <button type="submit" title="Approve & Restock" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-elegant-highlight text-slate-600 dark:text-gray-300 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+                                                <i class="bi bi-check-lg text-sm"></i>
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/supplier/inspect}" method="post" class="inline m-0">
+                                            <input type="hidden" name="id" th:value="${mat.id}" />
+                                            <input type="hidden" name="status" value="REJECTED" />
+                                            <input type="hidden" name="redirectPage" value="manage" />
+                                            <button type="submit" title="Reject Batch" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+                                                <i class="bi bi-x-lg text-xs"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    <button type="button" th:onclick="'openModal(\'editSupplierModal' + ${mat.id} + '\')'" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-accent-primary/10 text-accent-primary hover:bg-accent-primary hover:text-white transition-all" title="Edit Record">
+                                        <i class="bi bi-pencil text-xs"></i>
+                                    </button>
+                                    <a th:href="@{/supplier/delete/{id}(id=${mat.id})}" onclick="return confirm('Delete this material receipt record?')" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white transition-all" title="Delete Record">
+                                        <i class="bi bi-trash3 text-xs"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Empty State -->
+                        <tr th:if="${#lists.isEmpty(receivedMaterials)}">
+                            <td colspan="8" class="py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                                    <i class="bi bi-box-arrow-in-down text-3xl mb-2 opacity-50"></i>
+                                    <p class="text-xs font-light tracking-widest uppercase">No materials received yet. Click "Receive Materials" to begin.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Table 2: Master Suppliers Directory Table (suppliers SQL Table) -->
+        <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-black/5 dark:border-white/10 flex justify-between items-center bg-gray-50/40 dark:bg-white/5">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-building text-elegant-highlight text-lg"></i>
+                    <h2 class="text-sm font-bold tracking-widest uppercase text-light-text dark:text-white">Master Suppliers Directory</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-600 dark:text-gray-300 bg-elegant-highlight border border-purple-500/20 px-2.5 py-0.5 rounded-full uppercase tracking-widest font-mono font-bold" th:text="${#lists.size(registeredSuppliers) + ' Registered Vendors'}">3 Vendors</span>
+                    <span class="text-[11px] text-gray-500 uppercase tracking-wider">SQL Table: <code>suppliers</code></span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] whitespace-nowrap">Supplier Code</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Company Name</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Contact Info</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px]">Address / Location</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-center whitespace-nowrap">Status</th>
+                            <th class="py-3 px-3.5 font-bold tracking-wider uppercase text-[11px] text-right whitespace-nowrap">Quick Intake</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-black/5 dark:divide-white/5 font-medium">
+                        <tr th:each="sup : ${registeredSuppliers}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                            <td class="py-2.5 px-3.5 font-mono font-bold text-slate-600 dark:text-gray-300 whitespace-nowrap" th:text="${sup.supplierCode}">SUP-001</td>
+                            <td class="py-2.5 px-3.5">
+                                <div class="font-bold text-xs uppercase text-light-text dark:text-white flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-elegant-highlight text-slate-600 dark:text-gray-300 flex items-center justify-center text-[11px] font-bold font-mono" th:text="${#strings.substring(sup.name, 0, 1)}">A</div>
+                                    <span th:text="${sup.name}">Apex Textiles</span>
+                                </div>
+                            </td>
+                            <td class="py-2.5 px-3.5 text-gray-500 text-xs font-mono" th:text="${sup.contactInfo}">0112345678</td>
+                            <td class="py-2.5 px-3.5 text-gray-500 text-xs" th:text="${sup.address != null ? sup.address : 'Colombo, Sri Lanka'}">Biyagama EPZ</td>
+                            <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 bg-elegant-highlight text-slate-600 dark:text-gray-300 border border-emerald-500/20 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                                </span>
+                            </td>
+                            <td class="py-2.5 px-3.5 text-right whitespace-nowrap">
+                                <button type="button" onclick="openModal('addSupplierModal')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent-primary/10 text-accent-primary hover:bg-accent-primary hover:text-white text-xs font-bold uppercase tracking-wider transition-all">
+                                    <i class="bi bi-box-arrow-in-down"></i> Receive Fabric
+                                </button>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(registeredSuppliers)}">
+                            <td colspan="6" class="py-8 text-center text-gray-400 text-xs">
+                                No registered suppliers found in database.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+</main>
+
+<!-- Receive Materials from Supplier Modal -->
+<div id="addSupplierModal" class="fixed inset-0 z-[1060] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-box-arrow-in-down text-accent-primary text-xl"></i>
+                <h5 class="text-lg font-light uppercase tracking-widest text-light-text dark:text-white">Receive Materials from Supplier</h5>
+            </div>
+            <button onclick="closeModal('addSupplierModal')" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
+            <form th:action="@{/supplier/receive}" method="post" id="addSupplierForm">
+                <div class="p-6 space-y-6">
+                    
+                    <!-- Section 1: Order & Intake Tracking Banner -->
+                    <div class="p-3.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-accent-primary/10 text-accent-primary flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-upc-scan"></i>
+                            </div>
+                            <div>
+                                <div class="text-[10px] uppercase font-bold tracking-widest text-gray-500">Intake Identifiers</div>
+                                <div class="flex items-center gap-2 font-mono font-bold text-sm text-light-text dark:text-white">
+                                    <span class="text-accent-primary" th:text="${nextReceiptId}">MR-2026-004</span>
+                                    <span class="text-gray-400">/</span>
+                                    <span class="text-slate-600 dark:text-gray-300" th:text="${nextPoNumber}">PO-2026-004</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-gray-300 bg-elegant-highlight border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                                <i class="bi bi-magic"></i> Auto-Generated
+                            </span>
+                        </div>
+                        <!-- Hidden inputs to bind seamlessly -->
+                        <input type="hidden" name="receiptId" th:value="${nextReceiptId}">
+                        <input type="hidden" name="poNumber" th:value="${nextPoNumber}">
+                    </div>
+
+                    <!-- Section 2: Supplier Selection -->
+                    <div>
+                        <div class="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-2 mb-3">
+                            <h6 class="text-xs font-bold tracking-widest uppercase text-accent-secondary">Supplier Selection</h6>
+                            <span id="supplierModeBadge" class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-gray-300 bg-elegant-highlight border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                                <i class="bi bi-check-circle-fill"></i> Registered Supplier
+                            </span>
+                        </div>
+
+                        <!-- Toggle Option: Already Registered vs New Supplier -->
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <!-- Option A: Already Registered -->
+                            <button type="button" id="supplierTypeExistingCard" onclick="setSupplierType('existing')" class="flex items-center gap-3 p-3 rounded-2xl border-2 border-accent-primary bg-accent-primary/10 text-accent-primary cursor-pointer transition-all text-left">
+                                <input type="radio" name="supplierTypeRadio" id="supplierTypeExisting" value="existing" checked class="hidden">
+                                <div class="w-8 h-8 rounded-xl bg-accent-primary/20 flex items-center justify-center text-accent-primary text-base flex-shrink-0">
+                                    <i class="bi bi-building-check"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold uppercase tracking-wider">Already Registered</div>
+                                    <div class="text-[10px] text-gray-500 dark:text-gray-400">Pick from existing vendors</div>
+                                </div>
+                            </button>
+
+                            <!-- Option B: New Supplier -->
+                            <button type="button" id="supplierTypeNewCard" onclick="setSupplierType('new')" class="flex items-center gap-3 p-3 rounded-2xl border-2 border-black/10 dark:border-white/10 text-gray-500 cursor-pointer transition-all hover:border-purple-500/50 text-left">
+                                <input type="radio" name="supplierTypeRadio" id="supplierTypeNew" value="new" class="hidden">
+                                <div class="w-8 h-8 rounded-xl bg-elegant-highlight flex items-center justify-center text-slate-600 dark:text-gray-300 text-base flex-shrink-0">
+                                    <i class="bi bi-person-plus"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold uppercase tracking-wider text-light-text dark:text-white">New Supplier</div>
+                                    <div class="text-[10px] text-slate-600 dark:text-gray-300 font-semibold">Auto-assigns [[${nextSupplierCode}]]</div>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- View 1: When "Already Registered" is selected -->
+                        <div id="registeredSupplierWrapper" class="space-y-2.5">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5">
+                                    Select Existing Vendor
+                                </label>
+                                <div class="relative">
+                                    <select id="registeredSupplierSelect" onchange="onRegisteredSupplierChange(this)" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-light-text dark:text-white font-medium focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all cursor-pointer">
+                                        <option th:each="reg, iter : ${registeredSuppliers}"
+                                                th:value="${reg.supplierCode}"
+                                                th:data-name="${reg.name}"
+                                                th:data-contact="${reg.contactInfo}"
+                                                th:selected="${iter.first}"
+                                                th:text="${reg.supplierCode + ' — ' + reg.name + ' (' + reg.contactInfo + ')'}">
+                                            SUP-001 — Lanka Textiles Ltd (0112345678)
+                                        </option>
+                                        <option th:if="${#lists.isEmpty(registeredSuppliers)}" value="" disabled selected>
+                                            No registered suppliers found. Switch to New Supplier.
+                                        </option>
+                                    </select>
+                                    <i class="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                                </div>
+                            </div>
+
+                            <!-- Sleek Vendor Profile Badge Card -->
+                            <div class="p-3 rounded-xl bg-accent-primary/5 border border-accent-primary/20 flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-accent-primary/10 text-accent-primary flex items-center justify-center font-bold text-xs" id="vendorAvatarText">
+                                        LT
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-light-text dark:text-white" id="vendorCardName">Lanka Textiles Ltd</div>
+                                        <div class="text-[11px] text-gray-500" id="vendorCardContact">0112345678 / sales@lankatex.com</div>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg bg-accent-primary/10 text-accent-primary font-mono text-[11px] font-bold" id="vendorCardCode">
+                                    SUP-001
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- View 2: When "New Supplier" is selected -->
+                        <div id="newSupplierWrapper" class="hidden space-y-3 p-3.5 rounded-2xl bg-elegant-highlight border border-purple-500/20">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                                    <i class="bi bi-magic"></i> New Vendor Registration
+                                </span>
+                                <span class="px-2.5 py-0.5 rounded-full bg-elegant-highlight text-slate-600 dark:text-gray-300 text-xs font-mono font-bold" th:text="${'ID: ' + nextSupplierCode}">
+                                    ID: SUP-004
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1">Company Name</label>
+                                    <input type="text" id="newSupplierNameInput" placeholder="e.g. Apex Fabrics Ltd" oninput="syncSupplierFields()" class="w-full bg-white dark:bg-dark-card border border-purple-500/30 rounded-xl px-3.5 py-2 text-sm text-light-text dark:text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1">Phone / Email</label>
+                                    <input type="text" id="newSupplierContactInput" placeholder="e.g. 0112345678 / sales@apex.lk" oninput="syncSupplierFields()" class="w-full bg-white dark:bg-dark-card border border-purple-500/30 rounded-xl px-3.5 py-2 text-sm text-light-text dark:text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden form inputs ensuring data binds correctly to backend model -->
+                        <input type="hidden" id="supplierCodeInput" name="supplierCode" th:value="${not #lists.isEmpty(registeredSuppliers) ? registeredSuppliers[0].supplierCode : nextSupplierCode}">
+                        <input type="hidden" id="supplierNameInput" name="supplierName" th:value="${not #lists.isEmpty(registeredSuppliers) ? registeredSuppliers[0].name : ''}">
+                        <input type="hidden" id="supplierContactInput" name="contactInfo" th:value="${not #lists.isEmpty(registeredSuppliers) ? registeredSuppliers[0].contactInfo : ''}">
+                    </div>
+                    
+                    <!-- Section 3: Material Details with Interactive Quick-Picks -->
+                    <div>
+                        <div class="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-2 mb-4">
+                            <h6 class="text-xs font-bold tracking-widest uppercase text-elegant-highlight">3. Material Specifications & Costing</h6>
+                            <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Quick Fill Enabled</span>
+                        </div>
+
+                        <!-- Fabric Type with Quick-Pick Chips -->
+                        <div class="mb-4">
+                            <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">
+                                Fabric Type
+                            </label>
+                            <div class="flex flex-wrap gap-1.5 mb-2.5">
+                                <button type="button" onclick="selectFabric('Pique Cotton')" class="fabric-chip text-[11px] font-semibold px-3 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-purple-500 hover:text-elegant-highlight bg-black/5 dark:bg-white/5 transition-all">Pique Cotton</button>
+                                <button type="button" onclick="selectFabric('Single Jersey Cotton')" class="fabric-chip text-[11px] font-semibold px-3 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-purple-500 hover:text-elegant-highlight bg-black/5 dark:bg-white/5 transition-all">Single Jersey</button>
+                                <button type="button" onclick="selectFabric('Interlock Knit')" class="fabric-chip text-[11px] font-semibold px-3 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-purple-500 hover:text-elegant-highlight bg-black/5 dark:bg-white/5 transition-all">Interlock Knit</button>
+                                <button type="button" onclick="selectFabric('Polyester Cotton Blend')" class="fabric-chip text-[11px] font-semibold px-3 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-purple-500 hover:text-elegant-highlight bg-black/5 dark:bg-white/5 transition-all">Poly-Cotton</button>
+                                <button type="button" onclick="selectFabric('Organic Cotton')" class="fabric-chip text-[11px] font-semibold px-3 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-purple-500 hover:text-elegant-highlight bg-black/5 dark:bg-white/5 transition-all">Organic Cotton</button>
+                                <button type="button" onclick="selectFabric('Linen Blend')" class="fabric-chip text-[11px] font-semibold px-3 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-purple-500 hover:text-elegant-highlight bg-black/5 dark:bg-white/5 transition-all">Linen Blend</button>
+                            </div>
+                            <input type="text" id="matFabricInput" name="fabricType" value="Pique Cotton" required placeholder="Or type custom fabric type..." oninput="updateLiveSummary()" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all">
+                        </div>
+
+                        <!-- Color with Visual Palette Swatches -->
+                        <div class="mb-4">
+                            <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">
+                                Color Selection (Synchronized with Products)
+                            </label>
+                            <div class="flex flex-wrap gap-2 mb-2.5">
+                                <button type="button" onclick="selectColor('Navy Blue', '#1B2A4A')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#1B2A4A] inline-block border border-white/20"></span> Navy Blue
+                                </button>
+                                <button type="button" onclick="selectColor('Black', '#111111')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#111111] inline-block border border-white/20"></span> Black
+                                </button>
+                                <button type="button" onclick="selectColor('White', '#FFFFFF')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#FFFFFF] inline-block border border-black/20"></span> White
+                                </button>
+                                <button type="button" onclick="selectColor('Red', '#DC2626')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#DC2626] inline-block"></span> Red
+                                </button>
+                                <button type="button" onclick="selectColor('Blue', '#2563EB')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#2563EB] inline-block"></span> Blue
+                                </button>
+                                <button type="button" onclick="selectColor('Green', '#16A34A')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#16A34A] inline-block"></span> Green
+                                </button>
+                                <button type="button" onclick="selectColor('Yellow', '#EAB308')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#EAB308] inline-block"></span> Yellow
+                                </button>
+                                <button type="button" onclick="selectColor('Pink', '#EC4899')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#EC4899] inline-block"></span> Pink
+                                </button>
+                                <button type="button" onclick="selectColor('Heather Grey', '#6B7280')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#6B7280] inline-block"></span> Heather Grey
+                                </button>
+                                <button type="button" onclick="selectColor('Orange', '#F97316')" class="color-chip flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 hover:border-accent-primary bg-black/5 dark:bg-white/5 transition-all">
+                                    <span class="w-3 h-3 rounded-full bg-[#F97316] inline-block"></span> Orange
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <span id="selectedColorDot" class="w-4 h-4 rounded-full bg-[#1B2A4A] absolute left-3.5 top-1/2 -translate-y-1/2 border border-white/20 z-10"></span>
+                                <select id="matColourSelect" name="colour" onchange="syncSupplierColorFromSelect(this.value); updateLiveSummary();" required class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-10 pr-10 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                    <option value="Navy Blue" selected>Navy Blue</option>
+                                    <option value="Black">Black</option>
+                                    <option value="White">White</option>
+                                    <option value="Red">Red</option>
+                                    <option value="Blue">Blue</option>
+                                    <option value="Green">Green</option>
+                                    <option value="Yellow">Yellow</option>
+                                    <option value="Pink">Pink</option>
+                                    <option value="Heather Grey">Heather Grey</option>
+                                    <option value="Orange">Orange</option>
+                                </select>
+                                <i class="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                            </div>
+                        </div>
+
+                        <!-- Quantity, Unit Rate & Auto-Calculating Total Cost -->
+                        <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 mb-4">
+                            <div class="grid grid-cols-3 gap-4 mb-3">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5">
+                                        Qty Received (kg)
+                                    </label>
+                                    <input type="number" id="matQtyInput" name="quantityReceived" value="500" required step="0.1" placeholder="500" oninput="calculateTotalCost()" class="w-full bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-bold text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5">
+                                        Rate / kg (LKR)
+                                    </label>
+                                    <input type="number" id="matRateInput" value="300" step="1" placeholder="300" oninput="calculateTotalCost()" class="w-full bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-bold text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5">
+                                        Total Cost (LKR)
+                                    </label>
+                                    <input type="number" id="matPriceInput" name="price" value="150000.00" required step="0.01" placeholder="150000.00" oninput="updateLiveSummary()" class="w-full bg-white dark:bg-dark-card border border-accent-primary/50 text-accent-primary rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+                                <span id="rateCalculationTag" class="font-mono">💡 500 kg × LKR 300.00/kg = LKR 150,000.00</span>
+                                <span class="text-[10px] text-slate-600 dark:text-gray-300 font-semibold">Auto-calculated</span>
+                            </div>
+                        </div>
+
+                        <!-- Received Date with Quick Pick Helpers -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500">Received Date</label>
+                                <div class="flex gap-1 text-[10px]">
+                                    <button type="button" onclick="setRecDate(0)" class="text-accent-primary hover:underline font-semibold">Today</button>
+                                    <span class="text-gray-400">|</span>
+                                    <button type="button" onclick="setRecDate(-1)" class="text-gray-500 hover:underline">Yesterday</button>
+                                </div>
+                            </div>
+                            <input type="date" id="matRecDateInput" name="receivedDate" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                        </div>
+
+                        <!-- Live Summary Banner -->
+                        <div class="p-3.5 rounded-2xl bg-elegant-highlight border border-indigo-500/25 flex items-center justify-between gap-3 text-xs">
+                            <div class="flex items-center gap-2">
+                                <i class="bi bi-info-circle-fill text-elegant-highlight text-sm flex-shrink-0"></i>
+                                <span id="liveSummaryText" class="font-medium text-indigo-700 dark:text-indigo-300">
+                                    [MR-2026-004] 500 kg Pique Cotton (Navy Blue) | Total: LKR 150,000.00
+                                </span>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-elegant-highlight flex-shrink-0">Live Preview</span>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+        
+        <div class="p-6 border-t border-black/10 dark:border-white/10 flex justify-end gap-3 bg-gray-50/50 dark:bg-white/5 rounded-b-3xl mt-auto">
+            <button type="button" onclick="closeModal('addSupplierModal')" class="px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-gray-300 dark:border-transparent">Cancel</button>
+            <button type="submit" form="addSupplierForm" class="bg-elegant-dark hover:opacity-90 text-white rounded-full px-6 py-2.5 font-bold tracking-widest uppercase text-xs transition-all shadow-glow flex items-center gap-2">
+                <i class="bi bi-check2-circle text-sm"></i> Record Material Receipt
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Material Receipt Modals -->
+<div th:each="mat : ${receivedMaterials}" th:id="'editSupplierModal' + ${mat.id}" class="fixed inset-0 z-[1060] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+            <h5 class="text-lg font-light uppercase tracking-widest text-light-text dark:text-white">Edit Material Receipt [[${mat.receiptId}]]</h5>
+            <button th:onclick="'closeModal(\'editSupplierModal' + ${mat.id} + '\')'" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
+            <form th:action="@{/supplier/update}" method="post" th:id="'editSupplierForm' + ${mat.id}">
+                <input type="hidden" name="id" th:value="${mat.id}" />
+                <div class="p-6 space-y-6">
+                    
+                    <!-- Receipt Details -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-accent-primary mb-4 border-b border-black/5 dark:border-white/5 pb-2">Receipt & Order Details</h6>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Receive Material ID</label>
+                                <input type="text" name="receiptId" readonly th:value="${mat.receiptId}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-accent-primary font-bold cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Purchase Order (PO)</label>
+                                <input type="text" name="poNumber" required th:value="${mat.poNumber}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Supplier Details -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-accent-secondary mb-4 border-b border-black/5 dark:border-white/5 pb-2">Supplier Information</h6>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Supplier Code</label>
+                                    <input type="text" name="supplierCode" readonly th:value="${mat.supplierCode}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-accent-primary font-bold cursor-not-allowed">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Supplier Name</label>
+                                    <input type="text" name="supplierName" required th:value="${mat.supplierName}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Phone / Email</label>
+                                <input type="text" name="contactInfo" required th:value="${mat.contactInfo}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Material Specifications -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-elegant-highlight mb-4 border-b border-black/5 dark:border-white/5 pb-2">Material Specifications</h6>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Fabric Type</label>
+                                <input type="text" name="fabricType" required th:value="${mat.fabricType}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Color</label>
+                                <div class="relative">
+                                    <select name="colour" required class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-4 pr-10 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                        <option value="Navy Blue" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Navy Blue')}">Navy Blue</option>
+                                        <option value="Black" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Black')}">Black</option>
+                                        <option value="White" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'White')}">White</option>
+                                        <option value="Red" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Red')}">Red</option>
+                                        <option value="Blue" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Blue')}">Blue</option>
+                                        <option value="Green" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Green')}">Green</option>
+                                        <option value="Yellow" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Yellow')}">Yellow</option>
+                                        <option value="Pink" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Pink')}">Pink</option>
+                                        <option value="Heather Grey" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Heather Grey')}">Heather Grey</option>
+                                        <option value="Orange" th:selected="${#strings.equalsIgnoreCase(mat.colour, 'Orange')}">Orange</option>
+                                    </select>
+                                    <i class="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantity & Pricing Details -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-emerald-600 dark:text-emerald-400 mb-4 border-b border-black/5 dark:border-white/5 pb-2">Quantity & Pricing</h6>
+                        <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 mb-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5">
+                                        Quantity Received (kg)
+                                    </label>
+                                    <input type="number" th:id="'editQty_' + ${mat.id}" name="quantityReceived" required step="0.1" min="0.1" th:value="${mat.quantityReceived}" th:oninput="'calculateEditTotalCost(' + ${mat.id} + ')'" class="w-full bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-bold text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5">
+                                        Rate / kg (LKR)
+                                    </label>
+                                    <input type="number" th:id="'editRate_' + ${mat.id}" step="0.01" min="0" th:value="${(mat.quantityReceived != null and mat.quantityReceived > 0 and mat.price != null) ? #numbers.formatDecimal(mat.price / mat.quantityReceived, 1, 2) : '0.00'}" th:oninput="'calculateEditTotalCost(' + ${mat.id} + ')'" class="w-full bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-bold text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5">
+                                        Total Cost (LKR)
+                                    </label>
+                                    <input type="number" th:id="'editPrice_' + ${mat.id}" name="price" required step="0.01" min="0" th:value="${mat.price}" th:oninput="'calculateEditRate(' + ${mat.id} + ')'" class="w-full bg-white dark:bg-dark-card border border-accent-primary/50 text-accent-primary rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all font-mono">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+                                <span th:id="'editCalcTag_' + ${mat.id}" class="font-mono">
+                                    💡 <span th:text="${mat.quantityReceived}">300</span> kg × LKR <span th:text="${(mat.quantityReceived != null and mat.quantityReceived > 0 and mat.price != null) ? #numbers.formatDecimal(mat.price / mat.quantityReceived, 1, 2) : '0.00'}">6.00</span>/kg = LKR <span th:text="${#numbers.formatDecimal(mat.price, 1, 2)}">1,800.00</span>
+                                </span>
+                                <span class="text-[10px] text-slate-600 dark:text-gray-300 font-semibold">Auto-calculated</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Batch & Additional Details -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-gray-500 mb-4 border-b border-black/5 dark:border-white/5 pb-2">Batch & Additional Info</h6>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Roll Number</label>
+                                <input type="text" name="rollNumber" th:value="${mat.rollNumber}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Lot Number</label>
+                                <input type="text" name="lotNumber" th:value="${mat.lotNumber}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Notes</label>
+                            <input type="text" name="notes" th:value="${mat.notes}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="p-6 border-t border-black/10 dark:border-white/10 flex justify-end gap-3 bg-gray-50/50 dark:bg-white/5 rounded-b-3xl mt-auto">
+            <button type="button" th:onclick="'closeModal(\'editSupplierModal' + ${mat.id} + '\')'" class="px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-gray-300 dark:border-transparent">Cancel</button>
+            <button type="submit" th:form="'editSupplierForm' + ${mat.id}" class="bg-accent-primary text-white rounded-full px-6 py-2 font-bold tracking-widest uppercase text-xs hover:bg-accent-primaryHover transition-colors shadow-glow">Update Receipt</button>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 20px; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.5);
+        cursor: pointer;
+    }
+</style>
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    window.onclick = function(event) {
+        if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {
+            event.target.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+    var AUTO_NEXT_SUPPLIER_CODE = '[[${nextSupplierCode}]]';
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var today = new Date().toISOString().split('T')[0];
+        var d = new Date();
+        d.setDate(d.getDate() + 7);
+        var in7Days = d.toISOString().split('T')[0];
+
+        var recDateInput = document.querySelector('#addSupplierModal input[name="receivedDate"]');
+        if (recDateInput && !recDateInput.value) {
+            recDateInput.value = today;
+        }
+
+        var regSelect = document.getElementById('registeredSupplierSelect');
+        if (!regSelect || regSelect.options.length === 0 || regSelect.options[0].disabled) {
+            setSupplierType('new');
+        } else {
+            setSupplierType('existing');
+        }
+    });
+
+    function setSupplierType(type) {
+        var isNew = (type === 'new');
+        var newRadio = document.getElementById('supplierTypeNew');
+        var existingRadio = document.getElementById('supplierTypeExisting');
+        var newCard = document.getElementById('supplierTypeNewCard');
+        var existingCard = document.getElementById('supplierTypeExistingCard');
+        var regWrapper = document.getElementById('registeredSupplierWrapper');
+        var newWrapper = document.getElementById('newSupplierWrapper');
+        var regSelect = document.getElementById('registeredSupplierSelect');
+        var codeInput = document.getElementById('supplierCodeInput');
+        var nameInput = document.getElementById('supplierNameInput');
+        var contactInput = document.getElementById('supplierContactInput');
+        var badge = document.getElementById('supplierModeBadge');
+
+        if (isNew) {
+            if (newRadio) newRadio.checked = true;
+            if (newCard) {
+                newCard.className = 'flex items-center gap-3 p-3 rounded-2xl border-2 border-purple-500 bg-elegant-highlight text-slate-600 dark:text-gray-300 cursor-pointer transition-all shadow-sm text-left';
+            }
+            if (existingCard) {
+                existingCard.className = 'flex items-center gap-3 p-3 rounded-2xl border-2 border-black/10 dark:border-white/10 text-gray-500 cursor-pointer transition-all hover:border-accent-primary/50 text-left';
+            }
+            if (regWrapper) regWrapper.classList.add('hidden');
+            if (newWrapper) newWrapper.classList.remove('hidden');
+
+            if (codeInput) codeInput.value = AUTO_NEXT_SUPPLIER_CODE;
+            syncSupplierFields();
+
+            if (badge) {
+                badge.innerHTML = '<i class="bi bi-magic"></i> Auto-ID: ' + AUTO_NEXT_SUPPLIER_CODE;
+                badge.className = 'inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-gray-300 bg-elegant-highlight border border-purple-500/20 px-2.5 py-0.5 rounded-full';
+            }
+        } else {
+            if (existingRadio) existingRadio.checked = true;
+            if (existingCard) {
+                existingCard.className = 'flex items-center gap-3 p-3 rounded-2xl border-2 border-accent-primary bg-accent-primary/10 text-accent-primary cursor-pointer transition-all shadow-sm text-left';
+            }
+            if (newCard) {
+                newCard.className = 'flex items-center gap-3 p-3 rounded-2xl border-2 border-black/10 dark:border-white/10 text-gray-500 cursor-pointer transition-all hover:border-purple-500/50 text-left';
+            }
+            if (regWrapper) regWrapper.classList.remove('hidden');
+            if (newWrapper) newWrapper.classList.add('hidden');
+
+            if (regSelect && regSelect.options.length > 0 && !regSelect.options[0].disabled) {
+                onRegisteredSupplierChange(regSelect);
+            }
+        }
+        updateLiveSummary();
+    }
+
+    function onRegisteredSupplierChange(selectEl) {
+        var option = selectEl.options[selectEl.selectedIndex];
+        if (!option || option.disabled) return;
+        var code = option.value || '';
+        var name = option.getAttribute('data-name') || '';
+        var contact = option.getAttribute('data-contact') || '';
+
+        var codeInput = document.getElementById('supplierCodeInput');
+        var nameInput = document.getElementById('supplierNameInput');
+        var contactInput = document.getElementById('supplierContactInput');
+        var badge = document.getElementById('supplierModeBadge');
+
+        var cardName = document.getElementById('vendorCardName');
+        var cardContact = document.getElementById('vendorCardContact');
+        var cardCode = document.getElementById('vendorCardCode');
+        var avatar = document.getElementById('vendorAvatarText');
+
+        if (codeInput) codeInput.value = code;
+        if (nameInput) nameInput.value = name;
+        if (contactInput) contactInput.value = contact;
+
+        if (cardName) cardName.innerText = name || 'Supplier';
+        if (cardContact) cardContact.innerText = contact || 'No contact specified';
+        if (cardCode) cardCode.innerText = code || 'SUP-001';
+        if (avatar) {
+            var initials = (name || 'SP').split(' ').map(function(n){ return n[0]; }).join('').substring(0, 2).toUpperCase();
+            avatar.innerText = initials || 'VN';
+        }
+
+        if (badge) {
+            badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Registered: ' + code;
+            badge.className = 'inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-gray-300 bg-elegant-highlight border border-emerald-500/20 px-2.5 py-0.5 rounded-full';
+        }
+        updateLiveSummary();
+    }
+
+    function syncSupplierFields() {
+        var newName = document.getElementById('newSupplierNameInput')?.value || '';
+        var newContact = document.getElementById('newSupplierContactInput')?.value || '';
+        var nameInput = document.getElementById('supplierNameInput');
+        var contactInput = document.getElementById('supplierContactInput');
+
+        if (nameInput) nameInput.value = newName;
+        if (contactInput) contactInput.value = newContact;
+        updateLiveSummary();
+    }
+
+    function selectFabric(fabricName) {
+        var input = document.getElementById('matFabricInput');
+        if (input) {
+            input.value = fabricName;
+            input.focus();
+        }
+        updateLiveSummary();
+    }
+
+    const supplierColorHexMap = {
+        'Navy Blue': '#1B2A4A',
+        'Black': '#111111',
+        'White': '#FFFFFF',
+        'Red': '#DC2626',
+        'Blue': '#2563EB',
+        'Green': '#16A34A',
+        'Yellow': '#EAB308',
+        'Pink': '#EC4899',
+        'Heather Grey': '#6B7280',
+        'Orange': '#F97316'
+    };
+
+    function selectColor(colorName, colorHex) {
+        var select = document.getElementById('matColourSelect');
+        var dot = document.getElementById('selectedColorDot');
+        if (select) {
+            select.value = colorName;
+        }
+        var hex = colorHex || supplierColorHexMap[colorName] || '#1B2A4A';
+        if (dot) {
+            dot.style.backgroundColor = hex;
+        }
+        updateLiveSummary();
+    }
+
+    function syncSupplierColorFromSelect(colorName) {
+        var hex = supplierColorHexMap[colorName] || '#1B2A4A';
+        var dot = document.getElementById('selectedColorDot');
+        if (dot) {
+            dot.style.backgroundColor = hex;
+        }
+    }
+
+    function calculateTotalCost() {
+        var qtyInput = document.getElementById('matQtyInput');
+        var rateInput = document.getElementById('matRateInput');
+        var priceInput = document.getElementById('matPriceInput');
+        var tag = document.getElementById('rateCalculationTag');
+
+        var qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        var rate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+        var total = qty * rate;
+
+        if (priceInput) {
+            priceInput.value = total.toFixed(2);
+        }
+        if (tag) {
+            tag.innerText = '💡 ' + qty + ' kg × LKR ' + rate.toFixed(2) + '/kg = LKR ' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        updateLiveSummary();
+    }
+
+    function updateLiveSummary() {
+        var recId = document.querySelector('#addSupplierModal input[name="receiptId"]')?.value || 'MR-2026-004';
+        var fabric = document.getElementById('matFabricInput')?.value || 'Fabric';
+        var colour = document.getElementById('matColourSelect')?.value || 'Navy Blue';
+        var qty = document.getElementById('matQtyInput')?.value || '0';
+        var price = parseFloat(document.getElementById('matPriceInput')?.value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var supplierName = document.getElementById('supplierNameInput')?.value || 'Supplier';
+
+        var summary = document.getElementById('liveSummaryText');
+        if (summary) {
+            summary.innerText = '[' + recId + '] ' + qty + ' kg ' + fabric + ' (' + colour + ') from ' + supplierName + ' | Total: LKR ' + price;
+        }
+    }
+
+
+
+    function calculateEditTotalCost(id) {
+        var qtyInput = document.getElementById('editQty_' + id);
+        var rateInput = document.getElementById('editRate_' + id);
+        var priceInput = document.getElementById('editPrice_' + id);
+        var tag = document.getElementById('editCalcTag_' + id);
+
+        var qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        var rate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+        var total = qty * rate;
+
+        if (priceInput) {
+            priceInput.value = total.toFixed(2);
+        }
+        if (tag) {
+            tag.innerHTML = '💡 ' + qty + ' kg × LKR ' + rate.toFixed(2) + '/kg = LKR ' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    function calculateEditRate(id) {
+        var qtyInput = document.getElementById('editQty_' + id);
+        var rateInput = document.getElementById('editRate_' + id);
+        var priceInput = document.getElementById('editPrice_' + id);
+        var tag = document.getElementById('editCalcTag_' + id);
+
+        var qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        var price = parseFloat(priceInput ? priceInput.value : 0) || 0;
+        var rate = qty > 0 ? (price / qty) : 0;
+
+        if (rateInput) {
+            rateInput.value = rate.toFixed(2);
+        }
+        if (tag) {
+            tag.innerHTML = '💡 ' + qty + ' kg × LKR ' + rate.toFixed(2) + '/kg = LKR ' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    function setRecDate(offsetDays) {
+        var d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        var input = document.getElementById('matRecDateInput');
+        if (input) input.value = d.toISOString().split('T')[0];
+    }
+</script>
+</body>
+</html>
+
+
+
+

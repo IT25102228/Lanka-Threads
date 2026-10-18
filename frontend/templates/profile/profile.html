@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('My Profile')}"></head>
+
+<body
+    class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+    <div th:replace="~{fragments/layout :: sidebar('profile', ${roleName})}"></div>
+
+    <main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[1000px] mx-auto min-h-screen flex flex-col">
+        <!-- Header -->
+        <div class="flex flex-wrap justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+            <div>
+                <h1 class="text-3xl font-light tracking-tight uppercase">My Profile</h1>
+                <p class="text-gray-500 text-sm mt-1 tracking-widest uppercase">Manage your account information</p>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div th:if="${successMessage}"
+            class="mb-6 p-4 rounded-xl bg-green-100/50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium tracking-wide flex items-center">
+            <i class="bi bi-check2-circle me-2 text-lg"></i> <span th:text="${successMessage}"></span>
+        </div>
+        <!-- Error Message -->
+        <div th:if="${errorMessage}"
+            class="mb-6 p-4 rounded-xl bg-red-100/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium tracking-wide flex items-center">
+            <i class="bi bi-exclamation-octagon me-2 text-lg"></i> <span th:text="${errorMessage}"></span>
+        </div>
+
+        <div
+            class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none p-6 md:p-8">
+
+            <div
+                class="flex flex-col md:flex-row items-center md:items-start gap-6 border-b border-black/10 dark:border-white/10 pb-8 mb-8">
+                <div class="relative group">
+                    <div th:if="${user.profilePhoto == null}"
+                        class="w-24 h-24 rounded-full border-2 border-accent-primary/50 flex items-center justify-center font-bold text-3xl bg-black/5 dark:bg-white/5 text-light-text dark:text-white">
+                        <span th:text="${#strings.substring(user.name, 0, 1).toUpperCase()}">U</span>
+                    </div>
+                    <img th:if="${user.profilePhoto != null}"
+                        th:src="@{'/uploads/profile-photos/' + ${user.id} + '/' + ${user.profilePhoto}}"
+                        class="w-24 h-24 rounded-full object-cover border-2 border-accent-primary/50"
+                        alt="Profile Photo">
+
+                    <form th:action="@{/profile/photo}" method="post" enctype="multipart/form-data"
+                        class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <input type="file" name="image" id="profileImage" class="hidden" accept="image/png, image/jpeg"
+                            onchange="this.form.submit()">
+                        <label for="profileImage"
+                            class="text-white text-xs font-bold tracking-widest uppercase cursor-pointer flex flex-col items-center">
+                            <i class="bi bi-camera text-xl mb-1"></i> Edit
+                        </label>
+                    </form>
+                </div>
+
+                <div class="flex-1 text-center md:text-left pt-2">
+                    <h4 class="text-xl font-bold uppercase tracking-widest text-light-text dark:text-white mb-1"
+                        th:text="${user.name}">Name</h4>
+                    <span
+                        class="inline-block bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/20 text-xs font-semibold tracking-widest uppercase px-3 py-1 rounded-full text-gray-600 dark:text-gray-300"
+                        th:text="${roleName}">Role</span>
+                </div>
+            </div>
+
+            <form th:action="@{/profile/update}" method="post">
+                <div class="space-y-6">
+                    <div>
+                        <label
+                            class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Username
+                            (Cannot be changed)</label>
+                        <input type="text" th:value="${user.username}" disabled
+                            class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed">
+                    </div>
+
+                    <div>
+                        <label for="name"
+                            class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Full
+                            Name</label>
+                        <input type="text" id="name" name="name" th:value="${user.name}" required
+                            class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                    </div>
+
+                    <div>
+                        <label for="email"
+                            class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Email
+                            Address</label>
+                        <input type="email" id="email" name="email" th:value="${user.email}" required
+                            class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button type="submit"
+                        class="bg-[#C9A96E] hover:bg-[#B8934A] text-slate-950 rounded-full px-8 py-3 font-bold tracking-widest uppercase text-xs hover:-translate-y-1 hover:shadow-glow transition-all duration-300 flex items-center">
+                        <i class="bi bi-save me-2"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+
+            <!-- Danger Zone: Delete Account Option (for Customer & Self Service) -->
+            <div class="mt-10 border-t border-rose-500/20 pt-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20">
+                    <div>
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Delete Customer Account
+                        </h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
+                            Permanently delete your profile and account credentials from Lanka Threads. Once deleted, your account and orders cannot be recovered.
+                        </p>
+                    </div>
+                    <button type="button" onclick="openDeleteModal()"
+                        class="delete-btn delete-btn--solid flex-shrink-0 shadow-sm">
+                        <!-- Ícono Tacho SVG -->
+                        <div class="trash-wrapper">
+                            <svg class="trash-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <g class="trash-lid">
+                                    <path d="M9 4.5C9 4.22386 9.22386 4 9.5 4H14.5C14.7761 4 15 4.22386 15 4.5V5.5H9V4.5Z" fill="currentColor"/>
+                                    <path d="M4 5.75C4 5.33579 4.33579 5 4.75 5H19.25C19.6642 5 20 5.33579 20 5.75C20 6.16421 19.6642 6.5 19.25 6.5H4.75C4.33579 6.5 4 6.16421 4 5.75Z" fill="currentColor"/>
+                                </g>
+                                <defs>
+                                    <clipPath id="trashClipProf1">
+                                        <path d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z"/>
+                                    </clipPath>
+                                </defs>
+                                <g clip-path="url(#trashClipProf1)">
+                                    <rect class="trash-liquid" x="4" y="7" width="16" height="16"/>
+                                </g>
+                                <path class="trash-body" d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                <path class="trash-line" d="M9.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                <path class="trash-line" d="M12 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                <path class="trash-line" d="M14.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                            </svg>
+                        </div>
+                        <!-- Texto con variable de distancia por letra -->
+                        <div class="text-wrapper">
+                            <span class="letter" style="--fly-dist: 38px">D</span>
+                            <span class="letter" style="--fly-dist: 48px">e</span>
+                            <span class="letter" style="--fly-dist: 58px">l</span>
+                            <span class="letter" style="--fly-dist: 68px">e</span>
+                            <span class="letter" style="--fly-dist: 78px">t</span>
+                            <span class="letter" style="--fly-dist: 88px">e</span>
+                            <span class="letter" style="--fly-dist: 98px">&nbsp;</span>
+                            <span class="letter" style="--fly-dist: 108px">A</span>
+                            <span class="letter" style="--fly-dist: 118px">c</span>
+                            <span class="letter" style="--fly-dist: 128px">c</span>
+                            <span class="letter" style="--fly-dist: 138px">o</span>
+                            <span class="letter" style="--fly-dist: 148px">u</span>
+                            <span class="letter" style="--fly-dist: 158px">n</span>
+                            <span class="letter" style="--fly-dist: 168px">t</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteAccountModal" class="fixed inset-0 z-[99999] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-dark-card rounded-3xl border border-rose-500/30 max-w-md w-full p-6 sm:p-8 shadow-2xl relative animate-scale-up">
+            <div class="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-5 text-2xl">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-center font-bold text-lg text-slate-900 dark:text-white uppercase tracking-wider mb-2">Delete Your Account?</h3>
+            <p class="text-center text-xs text-elegant-highlight leading-relaxed mb-6">
+                Are you sure you want to permanently delete your account? This action cannot be reversed, and you will be immediately logged out.
+            </p>
+            <div class="flex items-center justify-end gap-3">
+                <button type="button" onclick="closeDeleteModal()"
+                    class="px-5 py-2.5 rounded-full border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 font-bold text-xs uppercase tracking-wider transition-colors">
+                    Cancel
+                </button>
+                <form th:action="@{/profile/delete}" method="post" class="m-0">
+                    <button type="submit" class="delete-btn delete-btn--solid" id="deleteBtn">
+                        <!-- Ícono Tacho SVG -->
+                        <div class="trash-wrapper" id="trashWrapper">
+                            <svg class="trash-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <g class="trash-lid">
+                                    <path d="M9 4.5C9 4.22386 9.22386 4 9.5 4H14.5C14.7761 4 15 4.22386 15 4.5V5.5H9V4.5Z" fill="currentColor"/>
+                                    <path d="M4 5.75C4 5.33579 4.33579 5 4.75 5H19.25C19.6642 5 20 5.33579 20 5.75C20 6.16421 19.6642 6.5 19.25 6.5H4.75C4.33579 6.5 4 6.16421 4 5.75Z" fill="currentColor"/>
+                                </g>
+                                <defs>
+                                    <clipPath id="trashClipProf2">
+                                        <path d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z"/>
+                                    </clipPath>
+                                </defs>
+                                <g clip-path="url(#trashClipProf2)">
+                                    <rect class="trash-liquid" x="4" y="7" width="16" height="16"/>
+                                </g>
+                                <path class="trash-body" d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                <path class="trash-line" d="M9.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                <path class="trash-line" d="M12 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                <path class="trash-line" d="M14.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                            </svg>
+                        </div>
+                        <!-- Texto con variable de distancia por letra -->
+                        <div class="text-wrapper" id="textWrapper">
+                            <span class="letter" style="--fly-dist: 38px">D</span>
+                            <span class="letter" style="--fly-dist: 50px">e</span>
+                            <span class="letter" style="--fly-dist: 60px">l</span>
+                            <span class="letter" style="--fly-dist: 70px">e</span>
+                            <span class="letter" style="--fly-dist: 82px">t</span>
+                            <span class="letter" style="--fly-dist: 94px">e</span>
+                        </div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openDeleteModal() {
+            const modal = document.getElementById('deleteAccountModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteAccountModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    </script>
+
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+
+</html>
+

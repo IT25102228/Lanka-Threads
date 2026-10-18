@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('VOID - Shop')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans" style="scroll-behavior: smooth;">
+
+<div th:replace="~{fragments/layout :: sidebar('shop', 'Customer')}"></div>
+
+<main class="pt-[140px] pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto min-h-screen">
+    
+    <!-- Category Navigation & Filter Bar -->
+    <div class="shop-filter-bar bg-white/80 dark:bg-dark-card/80 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl p-3.5 sm:p-4 mb-8 transition-colors duration-400 shadow-soft dark:shadow-none">
+        <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+        
+            <!-- Category Navigation Links (Left) -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
+                <a th:href="@{/customer/shop}" 
+                   class="px-4 py-2 text-xs font-bold tracking-wider uppercase transition-all duration-300 rounded-xl whitespace-nowrap inline-flex items-center gap-1.5"
+                   th:classappend="${category == null || category == '' ? 'bg-accent-primary text-white shadow-sm' : 'text-gray-500 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}">
+                    <i class="bi bi-grid-fill text-xs"></i> All
+                </a>
+                <a href="#mens-collection" 
+                   class="px-4 py-2 text-xs font-bold tracking-wider uppercase transition-all duration-300 rounded-xl whitespace-nowrap inline-flex items-center gap-1.5"
+                   th:classappend="${category == 'Men' ? 'bg-accent-primary text-white shadow-sm' : 'text-gray-500 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}">
+                    <i class="bi bi-gender-male text-xs"></i> Men
+                </a>
+                <a href="#womens-collection" 
+                   class="px-4 py-2 text-xs font-bold tracking-wider uppercase transition-all duration-300 rounded-xl whitespace-nowrap inline-flex items-center gap-1.5"
+                   th:classappend="${category == 'Women' ? 'bg-accent-primary text-white shadow-sm' : 'text-gray-500 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}">
+                    <i class="bi bi-gender-female text-xs"></i> Women
+                </a>
+                <a href="#children-collection" 
+                   class="px-4 py-2 text-xs font-bold tracking-wider uppercase transition-all duration-300 rounded-xl whitespace-nowrap inline-flex items-center gap-1.5"
+                   th:classappend="${category == 'Children' ? 'bg-accent-primary text-white shadow-sm' : 'text-gray-500 hover:text-light-text dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}">
+                    <i class="bi bi-emoji-smile text-xs"></i> Children
+                </a>
+            </div>
+            
+            <!-- Filters Form (Right) -->
+            <form method="get" th:action="@{/customer/shop}" class="flex flex-wrap items-center gap-2.5">
+                
+                <!-- Search Input with Integrated Icon -->
+                <div class="relative flex-1 sm:flex-initial flex items-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2 w-full sm:w-56 focus-within:border-accent-primary focus-within:bg-white dark:focus-within:bg-black/40 focus-within:ring-2 focus-within:ring-accent-primary/20 transition-all">
+                    <i class="bi bi-search text-gray-400 text-xs me-2 shrink-0"></i>
+                    <input type="text" name="search" th:value="${search}" placeholder="Search products..." class="w-full bg-transparent border-0 outline-none text-xs tracking-wide text-light-text dark:text-white placeholder-gray-400 focus:ring-0 p-0">
+                    <a th:if="${search != null && search != ''}" th:href="@{/customer/shop(category=${category},colour=${colour},size=${size})}" class="text-gray-400 hover:text-rose-500 transition-colors ml-1" title="Clear search">
+                        <i class="bi bi-x-circle-fill text-xs"></i>
+                    </a>
+                </div>
+                
+                <!-- Category Dropdown with Arrow Indicator -->
+                <div class="relative">
+                    <select name="category" onchange="this.form.submit()" class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-3.5 pr-8 py-2 text-xs font-semibold uppercase tracking-wider text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 cursor-pointer transition-all appearance-none">
+                        <option value="" class="dark:bg-[#141414] text-light-text dark:text-white">All Categories</option>
+                        <option value="Men" th:selected="${category == 'Men'}" class="dark:bg-[#141414] text-light-text dark:text-white">Men</option>
+                        <option value="Women" th:selected="${category == 'Women'}" class="dark:bg-[#141414] text-light-text dark:text-white">Women</option>
+                        <option value="Children" th:selected="${category == 'Children'}" class="dark:bg-[#141414] text-light-text dark:text-white">Children</option>
+                    </select>
+                    <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <!-- Colour Dropdown with Arrow Indicator -->
+                <div class="relative">
+                    <select name="colour" onchange="this.form.submit()" class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-3.5 pr-8 py-2 text-xs font-semibold uppercase tracking-wider text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 cursor-pointer transition-all appearance-none">
+                        <option value="" class="dark:bg-[#141414] text-light-text dark:text-white">All Colours</option>
+                        <option th:each="c : ${availableColours}" th:value="${c}" th:text="${#strings.toUpperCase(c)}" th:selected="${colour == c}" class="dark:bg-[#141414] text-light-text dark:text-white"></option>
+                    </select>
+                    <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <!-- Size Dropdown with Arrow Indicator -->
+                <div class="relative">
+                    <select name="size" onchange="this.form.submit()" class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-3.5 pr-8 py-2 text-xs font-semibold uppercase tracking-wider text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 cursor-pointer transition-all appearance-none">
+                        <option value="" class="dark:bg-[#141414] text-light-text dark:text-white">All Sizes</option>
+                        <option th:each="s : ${availableSizes}" th:value="${s}" th:text="${#strings.toUpperCase(s)}" th:selected="${size == s}" class="dark:bg-[#141414] text-light-text dark:text-white"></option>
+                    </select>
+                    <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                </div>
+                
+                <!-- Filter Submit Button -->
+                <button type="submit" class="inline-flex items-center gap-1.5 bg-accent-primary hover:bg-accent-primaryHover text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-xl shadow-sm hover:shadow transition-all active:scale-95">
+                    <i class="bi bi-funnel-fill text-xs"></i>
+                    <span>Filter</span>
+                </button>
+                
+                <!-- Reset Button -->
+                <a th:if="${(search != null && search != '') || (category != null && category != '') || (colour != null && colour != '') || (size != null && size != '')}" th:href="@{/customer/shop}" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/30 rounded-xl transition-all" title="Clear all filters">
+                    <i class="bi bi-arrow-counterclockwise text-xs"></i>
+                    <span>Reset</span>
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div th:if="${success}" class="mb-6 p-4 rounded-xl bg-green-100/50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-check2-circle me-2 text-lg"></i> <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-100/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-exclamation-octagon me-2 text-lg"></i> <span th:text="${error}"></span>
+    </div>
+
+    <!-- 01. MEN'S COLLECTION -->
+    <div id="mens-collection" class="pt-8 mb-16" th:if="${category == '' || category == null || category == 'Men'}">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+            <div>
+                <span class="inline-block bg-black/5 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">01 / Category</span>
+                <h2 class="text-4xl font-light tracking-tight text-light-text dark:text-white uppercase">Men's Collection</h2>
+            </div>
+            <span class="text-xs font-bold tracking-widest text-gray-500 mt-4 md:mt-0" th:text="${#lists.size(mensProducts) + ' ITEMS'}">10 ITEMS</span>
+        </div>
+
+        <div class="columns-2 md:columns-3 xl:columns-4 gap-6 space-y-6">
+            <div th:each="product, iterStat : ${mensProducts}" class="break-inside-avoid relative group cursor-pointer product-card" th:data-id="${product.id}" th:data-name="${product.name}" th:data-price="${product.price}" th:data-colour="${product.colour}" th:data-size="${product.size}" th:data-category="${product.category}" th:data-stock="${product.stockQuantity}" th:data-img="${product.displayImage}" th:data-main-image="${product.mainImageUrl}" th:data-sub-image1="${product.subImage1Url}" th:data-sub-image2="${product.subImage2Url}">
+                <!-- Image Wrapper -->
+                <div class="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-card shadow-soft dark:shadow-none mb-3">
+                    <img th:src="${product.displayImage}" class="w-full h-auto object-cover transition-transform duration-700 ease-cinematic group-hover:scale-105" alt="Men Product">
+                    
+                    <!-- Out of stock badge overlay -->
+                    <div th:if="${product.stockQuantity <= 0}" class="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                        Sold Out
+                    </div>
+                </div>
+                
+                <!-- Product Details -->
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-sm font-semibold tracking-wide text-light-text dark:text-white uppercase group-hover:text-accent-primary transition-colors" th:text="${product.name}">Men's Premium Polo</h3>
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mt-1" th:text="${product.colour + ' | ' + product.size}">Black | M</p>
+                    </div>
+                    <span class="text-sm font-light text-light-text dark:text-gray-300 tracking-wide" th:text="${'LKR ' + product.price}">LKR 1200.00</span>
+                </div>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(mensProducts)}" class="col-span-full text-center py-12">
+                <p class="text-sm font-light tracking-widest text-gray-500 uppercase">No men's products found.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 02. WOMEN'S COLLECTION -->
+    <div id="womens-collection" class="pt-8 mb-16" th:if="${category == '' || category == null || category == 'Women'}">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+            <div>
+                <span class="inline-block bg-black/5 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">02 / Category</span>
+                <h2 class="text-4xl font-light tracking-tight text-light-text dark:text-white uppercase">Women's Collection</h2>
+            </div>
+            <span class="text-xs font-bold tracking-widest text-gray-500 mt-4 md:mt-0" th:text="${#lists.size(womensProducts) + ' ITEMS'}">10 ITEMS</span>
+        </div>
+
+        <div class="columns-2 md:columns-3 xl:columns-4 gap-6 space-y-6">
+            <div th:each="product, iterStat : ${womensProducts}" class="break-inside-avoid relative group cursor-pointer product-card" th:data-id="${product.id}" th:data-name="${product.name}" th:data-price="${product.price}" th:data-colour="${product.colour}" th:data-size="${product.size}" th:data-category="${product.category}" th:data-stock="${product.stockQuantity}" th:data-img="${product.displayImage}" th:data-main-image="${product.mainImageUrl}" th:data-sub-image1="${product.subImage1Url}" th:data-sub-image2="${product.subImage2Url}">
+                <div class="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-card shadow-soft dark:shadow-none mb-3">
+                    <img th:src="${product.displayImage}" class="w-full h-auto object-cover transition-transform duration-700 ease-cinematic group-hover:scale-105" alt="Women Product">
+                    
+                    <div th:if="${product.stockQuantity <= 0}" class="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                        Sold Out
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-sm font-semibold tracking-wide text-light-text dark:text-white uppercase group-hover:text-accent-primary transition-colors" th:text="${product.name}">Women's Slim Fit Polo</h3>
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mt-1" th:text="${product.colour + ' | ' + product.size}">Red | S</p>
+                    </div>
+                    <span class="text-sm font-light text-light-text dark:text-gray-300 tracking-wide" th:text="${'LKR ' + product.price}">LKR 1100.00</span>
+                </div>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(womensProducts)}" class="col-span-full text-center py-12">
+                <p class="text-sm font-light tracking-widest text-gray-500 uppercase">No women's products found.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 03. CHILDREN'S COLLECTION -->
+    <div id="children-collection" class="pt-8 mb-16" th:if="${category == '' || category == null || category == 'Children'}">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4">
+            <div>
+                <span class="inline-block bg-black/5 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">03 / Category</span>
+                <h2 class="text-4xl font-light tracking-tight text-light-text dark:text-white uppercase">Children's Collection</h2>
+            </div>
+            <span class="text-xs font-bold tracking-widest text-gray-500 mt-4 md:mt-0" th:text="${#lists.size(childrenProducts) + ' ITEMS'}">10 ITEMS</span>
+        </div>
+
+        <div class="columns-2 md:columns-3 xl:columns-4 gap-6 space-y-6">
+            <div th:each="product, iterStat : ${childrenProducts}" class="break-inside-avoid relative group cursor-pointer product-card" th:data-id="${product.id}" th:data-name="${product.name}" th:data-price="${product.price}" th:data-colour="${product.colour}" th:data-size="${product.size}" th:data-category="${product.category}" th:data-stock="${product.stockQuantity}" th:data-img="${product.displayImage}" th:data-main-image="${product.mainImageUrl}" th:data-sub-image1="${product.subImage1Url}" th:data-sub-image2="${product.subImage2Url}">
+                <div class="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-dark-card shadow-soft dark:shadow-none mb-3">
+                    <img th:src="${product.displayImage}" class="w-full h-auto object-cover transition-transform duration-700 ease-cinematic group-hover:scale-105" alt="Children Product">
+                    
+                    <div th:if="${product.stockQuantity <= 0}" class="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                        Sold Out
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-sm font-semibold tracking-wide text-light-text dark:text-white uppercase group-hover:text-accent-primary transition-colors" th:text="${product.name}">Kids Cotton Polo</h3>
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mt-1" th:text="${product.colour + ' | ' + product.size}">Blue | S</p>
+                    </div>
+                    <span class="text-sm font-light text-light-text dark:text-gray-300 tracking-wide" th:text="${'LKR ' + product.price}">LKR 800.00</span>
+                </div>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(childrenProducts)}" class="col-span-full text-center py-12">
+                <p class="text-sm font-light tracking-widest text-gray-500 uppercase">No children's products found.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fallback if empty -->
+    <div th:if="${#lists.isEmpty(products)}" class="text-center py-24">
+        <h3 class="text-xl font-light tracking-widest text-gray-500 uppercase">No products found matching your search.</h3>
+    </div>
+
+</main>
+
+<!-- PRODUCT DETAILS VIEW MODAL (SAMPLE MATCHING DARAZ/AMAZON SPECIFICATION VIEW) -->
+<div id="productDetailModal" class="fixed inset-0 z-[1070] hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#141414] border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-5xl shadow-2xl transform transition-all max-h-[92vh] overflow-hidden flex flex-col text-left">
+        <!-- Header -->
+        <div class="p-4 px-6 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-gray-50/80 dark:bg-white/5">
+            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent-primary">
+                <i class="bi bi-box-seam me-1"></i> Product Detail Overview
+            </div>
+            <button type="button" onclick="closeModal('productDetailModal')" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="overflow-y-auto flex-1 p-6 space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- Left Column: Product Image -->
+                <div class="lg:col-span-5 flex flex-col items-center">
+                    <div class="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-soft">
+                        <img id="detailMainImg" src="/images/products/polo_men.png" class="w-full h-80 lg:h-96 object-cover" alt="Product Image">
+                        <span class="absolute top-3 left-3 bg-accent-primary text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow">Lanka Threads Original</span>
+                    </div>
+                </div>
+
+                <!-- Middle Column: Product Info & Buy Options -->
+                <div class="lg:col-span-4 space-y-4">
+                    <div>
+                        <h2 id="detailTitle" class="text-xl font-bold tracking-tight text-light-text dark:text-white mb-2">T-Shirt Republic Polo Tshirt for Men Summer Cotton Pique Knit Casual Plain Polo T Shirts</h2>
+                        
+                        <!-- Ratings -->
+                        <div class="flex items-center gap-2 text-xs mb-3">
+                            <div class="flex text-elegant-highlight">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <span class="text-accent-primary font-semibold">5.0 (1,262 Ratings)</span>
+                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-500">8 Answered Questions</span>
+                        </div>
+
+                        <!-- Brand -->
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Brand: <span id="detailBrand" class="text-accent-primary font-bold">BEAST by Lanka Threads</span></p>
+                    </div>
+
+                    <div class="border-t border-b border-black/5 dark:border-white/10 py-3 space-y-1">
+                        <div class="flex items-baseline gap-3">
+                            <span id="detailPrice" class="text-3xl font-extrabold text-slate-600 dark:text-gray-300">LKR 1,900</span>
+                            <span id="detailOrigPrice" class="text-sm text-gray-400 line-through">LKR 2,300</span>
+                            <span class="bg-red-500/10 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded-full">-17% OFF</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 flex items-center gap-1">
+                            <i class="bi bi-credit-card-2-back text-accent-primary"></i> Installment: <span class="font-semibold text-light-text dark:text-gray-300">Up to 3 months, as low as LKR 633/mo</span>
+                        </p>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Color Family</label>
+                            <span id="detailColor" class="inline-block px-3 py-1 rounded-lg bg-gray-100 dark:bg-white/10 text-xs font-bold text-light-text dark:text-white uppercase">Navy Blue</span>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Size</label>
+                                <a href="#" class="text-[11px] text-accent-primary hover:underline">Size Guide <i class="bi bi-ruler me-1"></i></a>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="button" class="px-3 py-1.5 border border-black/10 dark:border-white/10 rounded-lg text-xs font-bold hover:border-accent-primary">XS</button>
+                                <button type="button" class="px-3 py-1.5 border border-black/10 dark:border-white/10 rounded-lg text-xs font-bold hover:border-accent-primary">S</button>
+                                <button type="button" class="px-3 py-1.5 border-2 border-accent-primary bg-accent-primary/10 text-accent-primary rounded-lg text-xs font-bold">M</button>
+                                <button type="button" class="px-3 py-1.5 border border-black/10 dark:border-white/10 rounded-lg text-xs font-bold hover:border-accent-primary">L</button>
+                                <button type="button" class="px-3 py-1.5 border border-black/10 dark:border-white/10 rounded-lg text-xs font-bold hover:border-accent-primary">XL</button>
+                            </div>
+                        </div>
+
+                        <!-- Quantity counter -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Quantity</label>
+                                <span id="detailStockBadge" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="adjustQty(-1)" class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-light-text dark:text-white font-bold flex items-center justify-center transition-colors shadow-sm text-base select-none active:scale-95" title="Decrease Quantity">-</button>
+                                <input type="number" id="detailQty" min="1" value="1" oninput="syncDetailQuantity()" onchange="syncDetailQuantity()" class="w-16 h-9 text-center bg-gray-50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl text-sm font-bold text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" aria-label="Quantity">
+                                <button type="button" onclick="adjustQty(1)" class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-light-text dark:text-white font-bold flex items-center justify-center transition-colors shadow-sm text-base select-none active:scale-95" title="Increase Quantity">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="pt-2 flex gap-3">
+                        <form th:action="@{/customer/cart/add}" method="post" id="detailModalAddForm" class="flex-1">
+                            <input type="hidden" name="productId" id="detailProductId" value="1">
+                            <input type="hidden" name="quantity" id="detailModalQtyInput" value="1">
+                            <button type="submit" id="detailAddToCartBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold uppercase text-xs tracking-wider py-3.5 rounded-xl transition-all shadow-glow flex items-center justify-center gap-2">
+                                <i class="bi bi-bag-plus-fill"></i> Add To Cart
+                            </button>
+                        </form>
+                        <form th:action="@{/customer/buy-now}" method="post" id="detailModalBuyNowForm" class="flex-1">
+                            <input type="hidden" name="productId" id="detailBuyNowProductId" value="1">
+                            <input type="hidden" name="quantity" id="detailModalBuyNowQtyInput" value="1">
+                            <button type="submit" id="detailBuyNowBtn" class="w-full bg-accent-primary hover:bg-accent-primaryHover text-white font-bold uppercase text-xs tracking-wider py-3.5 rounded-xl transition-all shadow-glow flex items-center justify-center gap-2">
+                                <i class="bi bi-lightning-fill"></i> Buy Now
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Column: Delivery Options & Return Guarantee -->
+                <div class="lg:col-span-3 bg-gray-50/70 dark:bg-white/5 p-4 rounded-2xl border border-black/5 dark:border-white/5 space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                            <span>Delivery Options</span>
+                            <i class="bi bi-info-circle"></i>
+                        </div>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-start gap-2 text-light-text dark:text-gray-300">
+                                <i class="bi bi-geo-alt text-accent-primary text-sm mt-0.5"></i>
+                                <div>
+                                    <p class="font-bold">Western, Colombo 01-15, Colombo 01 - Fort</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-black/5 dark:border-white/5">
+                                <span class="text-gray-500"><i class="bi bi-truck me-1"></i> Standard Delivery</span>
+                                <span class="font-bold text-light-text dark:text-white">LKR 255</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-500"><i class="bi bi-cash me-1"></i> Cash on Delivery</span>
+                                <span class="font-bold text-elegant-highlight uppercase text-[10px]">Available</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-black/5 dark:border-white/5">
+                        <div class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                            <span>Return & Warranty</span>
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div class="space-y-2 text-xs text-light-text dark:text-gray-300">
+                            <p class="flex items-center gap-1.5"><i class="bi bi-arrow-counterclockwise text-accent-primary"></i> 14 Days Easy Return</p>
+                            <p class="flex items-center gap-1.5"><i class="bi bi-check-circle text-elegant-highlight"></i> Change of Mind Guarantee</p>
+                            <p class="flex items-center gap-1.5"><i class="bi bi-award text-elegant-highlight"></i> 100% Quality Inspected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Product Details Specification List (Matching Screenshot 2) -->
+            <div class="border-t border-black/10 dark:border-white/10 pt-6">
+                <h4 class="text-base font-bold uppercase tracking-wider text-light-text dark:text-white mb-4 flex items-center gap-2">
+                    <i class="bi bi-list-stars text-accent-primary"></i> Product Details of <span id="detailSpecName">Men's Premium Navy Blue Polo T-Shirt</span>
+                </h4>
+                <div class="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl border border-black/5 dark:border-white/5">
+                    <ul class="space-y-2.5 text-sm text-gray-700 dark:text-gray-300">
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Product :</strong> <span id="specProduct">Men's Premium Navy Blue Polo T-Shirt</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Brand :</strong> <span id="specBrand">BEAST by Lanka Threads</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Colour :</strong> <span id="specColour">Navy Blue</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Material :</strong> <span>65/35 Premium Cotton Pique Knit</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Thickness :</strong> <span>220 GSM Export Grade</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Size Range :</strong> <span id="specSize">XS – XXL</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Quality Standards :</strong> <span>100% QC Passed. Export Ready.</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Specialities :</strong> <span>Tagless. Comfortable. Excellent Colorfastness. Anti-Shrink.</span></li>
+                        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-accent-primary"></span> <strong>Origin :</strong> <span>A Genuine Product. Proudly Made in Sri Lanka.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:inline="javascript">
+    var currentProductStock = 999;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var activeCategory = /*[[${category}]]*/ '';
+        if (activeCategory === 'Men') {
+            var el = document.getElementById('mens-collection');
+            if (el) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+        } else if (activeCategory === 'Women') {
+            var el = document.getElementById('womens-collection');
+            if (el) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+        } else if (activeCategory === 'Children') {
+            var el = document.getElementById('children-collection');
+            if (el) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+        }
+
+        // Delegated click handler for product cards using data-* attributes
+        document.querySelectorAll('.product-card').forEach(function(card) {
+            card.addEventListener('click', function(e) {
+                var d = card.dataset;
+                openProductDetails(d.id, d.name, d.price, d.colour, d.size, d.category, d.mainImage || d.img, d.subImage1, d.subImage2, d.stock);
+            });
+        });
+    });
+
+    function openProductDetails(id, name, price, colour, size, category, mainImgUrl, subImg1Url, subImg2Url, stock) {
+        document.getElementById('detailProductId').value = id;
+        document.getElementById('detailBuyNowProductId').value = id;
+        document.getElementById('detailTitle').innerText = name;
+        document.getElementById('specProduct').innerText = name;
+        document.getElementById('detailSpecName').innerText = name;
+        document.getElementById('detailPrice').innerText = 'LKR ' + price;
+        document.getElementById('detailOrigPrice').innerText = 'LKR ' + (parseFloat(price) * 1.2).toFixed(2);
+        document.getElementById('detailColor').innerText = colour || 'Standard';
+        document.getElementById('specColour').innerText = colour || 'Standard';
+        document.getElementById('specSize').innerText = size ? (size + ' (XS - XXL Available)') : 'XS - XXL';
+        
+        currentProductStock = (stock !== undefined && stock !== null && !isNaN(parseInt(stock, 10))) ? parseInt(stock, 10) : 999;
+        
+        var stockBadge = document.getElementById('detailStockBadge');
+        var addBtn = document.getElementById('detailAddToCartBtn');
+        var buyBtn = document.getElementById('detailBuyNowBtn');
+        var qtyInput = document.getElementById('detailQty');
+
+        if (stockBadge) {
+            if (currentProductStock > 0) {
+                stockBadge.innerText = currentProductStock + ' in stock';
+                stockBadge.className = 'text-[11px] font-semibold text-emerald-600 dark:text-emerald-400';
+                if (addBtn) addBtn.disabled = false;
+                if (buyBtn) buyBtn.disabled = false;
+            } else {
+                stockBadge.innerText = 'Out of Stock';
+                stockBadge.className = 'text-[11px] font-semibold text-rose-500';
+                if (addBtn) addBtn.disabled = true;
+                if (buyBtn) buyBtn.disabled = true;
+            }
+        }
+        
+        if (qtyInput) {
+            qtyInput.max = currentProductStock > 0 ? currentProductStock : 1;
+            qtyInput.value = '1';
+        }
+        syncDetailQuantity();
+
+        var fallback = category === 'Women' ? '/images/products/polo_women.png' : (category === 'Children' ? '/images/products/polo_children.png' : '/images/products/polo_men.png');
+        var mainSrc = (mainImgUrl && mainImgUrl.trim()) ? mainImgUrl.trim() : fallback;
+        document.getElementById('detailMainImg').src = mainSrc;
+        
+        openModal('productDetailModal');
+    }
+
+    function adjustQty(amount) {
+        var input = document.getElementById('detailQty');
+        if (!input) return;
+        var val = parseInt(input.value, 10) || 1;
+        val += amount;
+        var maxLimit = (currentProductStock && currentProductStock > 0) ? currentProductStock : 9999;
+        if (val < 1) val = 1;
+        if (val > maxLimit) val = maxLimit;
+        input.value = val;
+        syncDetailQuantity();
+    }
+
+    function syncDetailQuantity() {
+        var input = document.getElementById('detailQty');
+        if (!input) return;
+
+        var val = parseInt(input.value, 10);
+        var maxLimit = (currentProductStock && currentProductStock > 0) ? currentProductStock : 9999;
+        if (!Number.isFinite(val) || val < 1) val = 1;
+        if (val > maxLimit) val = maxLimit;
+        input.value = val;
+
+        var addQtyInput = document.getElementById('detailModalQtyInput');
+        var buyNowQtyInput = document.getElementById('detailModalBuyNowQtyInput');
+        if (addQtyInput) addQtyInput.value = val;
+        if (buyNowQtyInput) buyNowQtyInput.value = val;
+    }
+
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+</script>
+</body>
+</html>
+
+
+

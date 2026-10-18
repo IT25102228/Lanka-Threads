@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Customer Profiles')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('customers', 'Sales Manager')}"></div>
+
+<main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4 gap-4">
+        <div>
+            <span class="inline-block bg-accent-primary/10 text-accent-primary text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">Sales Portal</span>
+            <h1 class="text-3xl font-light tracking-tight uppercase">Customer Profiles</h1>
+            <p class="text-gray-500 text-sm mt-1 tracking-widest uppercase">Manage Customer Information</p>
+        </div>
+
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${success}" class="mb-6 p-4 rounded-2xl bg-green-100/60 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400 text-sm font-medium tracking-wide flex items-center gap-3 animate-fade-in">
+        <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-check2-circle text-green-500 text-lg"></i>
+        </div>
+        <span th:text="${success}">Operation completed successfully.</span>
+    </div>
+    <div th:if="${error}" class="mb-6 p-4 rounded-2xl bg-red-100/60 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-sm font-medium tracking-wide flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-exclamation-octagon text-red-500 text-lg"></i>
+        </div>
+        <span th:text="${error}">Error occurred.</span>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden flex-1 flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                    <tr>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Customer ID</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Customer</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Email</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                    <tr th:each="customer : ${customers}" class="hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors group">
+                        <td class="py-4 px-6">
+                            <span class="font-bold text-accent-primary tracking-widest text-xs bg-accent-primary/8 px-3 py-1 rounded-full" th:text="${customer.customerCode}">CUST-10001</span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full bg-elegant-dark hover:opacity-90 flex items-center justify-center text-accent-primary font-bold text-sm flex-shrink-0 border border-accent-primary/20"
+                                     th:text="${customer.name != null && !customer.name.isEmpty() ? #strings.substring(customer.name, 0, 1).toUpperCase() : 'C'}">J</div>
+                                <div>
+                                    <div class="font-semibold text-light-text dark:text-white" th:text="${customer.name != null ? customer.name : 'Customer'}">John Doe</div>
+                                    <div class="text-xs text-gray-400 tracking-wide" th:text="${'@' + customer.username}">@johndoe</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-2 text-gray-500">
+                                <i class="bi bi-envelope text-xs opacity-60"></i>
+                                <span th:text="${customer.email}">john@example.com</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button th:onclick="'openEditModal(' + ${customer.id} + ')'"
+                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-primary/10 text-accent-primary hover:bg-accent-primary hover:text-white transition-all duration-200 text-xs font-bold tracking-widest uppercase"
+                                        title="Edit Profile">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <a th:href="@{/sales/customers/delete/{id}(id=${customer.id})}"
+                                   data-confirm="Delete this customer profile? This action cannot be undone."
+                                   class="delete-btn delete-btn--sm"
+                                   title="Delete Profile">
+                                    <div class="trash-wrapper">
+                                        <svg class="trash-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <g class="trash-lid">
+                                                <path d="M9 4.5C9 4.22386 9.22386 4 9.5 4H14.5C14.7761 4 15 4.22386 15 4.5V5.5H9V4.5Z" fill="currentColor"/>
+                                                <path d="M4 5.75C4 5.33579 4.33579 5 4.75 5H19.25C19.6642 5 20 5.33579 20 5.75C20 6.16421 19.6642 6.5 19.25 6.5H4.75C4.33579 6.5 4 6.16421 4 5.75Z" fill="currentColor"/>
+                                            </g>
+                                            <defs>
+                                                <clipPath th:id="'trashClipCust_' + ${customer.id}">
+                                                    <path d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z"/>
+                                                </clipPath>
+                                            </defs>
+                                            <g th:attr="clip-path='url(#trashClipCust_' + ${customer.id} + ')'">
+                                                <rect class="trash-liquid" x="4" y="7" width="16" height="16"/>
+                                            </g>
+                                            <path class="trash-body" d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                            <path class="trash-line" d="M9.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                            <path class="trash-line" d="M12 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                            <path class="trash-line" d="M14.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-wrapper">
+                                        <span class="letter" style="--fly-dist: 36px">D</span>
+                                        <span class="letter" style="--fly-dist: 46px">e</span>
+                                        <span class="letter" style="--fly-dist: 56px">l</span>
+                                        <span class="letter" style="--fly-dist: 66px">e</span>
+                                        <span class="letter" style="--fly-dist: 76px">t</span>
+                                        <span class="letter" style="--fly-dist: 86px">e</span>
+                                    </div>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(customers)}">
+                        <td colspan="4" class="py-20 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
+                                    <i class="bi bi-people text-2xl opacity-50"></i>
+                                </div>
+                                <p class="text-sm font-light tracking-widest uppercase mb-1">No customers found</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-600">Add a customer to get started</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- ===== Edit Customer Modals ===== -->
+<th:block th:each="customer : ${customers}">
+    <div th:id="${'editCustomerModal' + customer.id}"
+         class="modal-overlay fixed inset-0 z-[1060] hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+        <!-- Scroll wrapper — centers content and allows scrolling -->
+        <div class="relative h-full overflow-y-auto flex items-center justify-center p-4"
+             th:onclick="'handleBackdropClick(event, \\'editCustomerModal' + ${customer.id} + '\\')'">
+            <div class="modal-card bg-white dark:bg-dark-card w-full max-w-md rounded-3xl shadow-2xl border border-black/10 dark:border-white/10 my-auto"
+                 onclick="event.stopPropagation()">
+
+                <!-- Coloured top band with avatar -->
+                <div class="relative rounded-t-3xl overflow-hidden bg-elegant-dark hover:opacity-90 dark:from-accent-primary/30 dark:via-accent-secondary/15 dark:to-transparent px-6 pt-8 pb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-2xl bg-elegant-dark hover:opacity-90 flex items-center justify-center text-white font-bold text-2xl shadow-glow flex-shrink-0"
+                             th:text="${customer.name != null && !customer.name.isEmpty() ? #strings.substring(customer.name, 0, 1).toUpperCase() : 'C'}">J</div>
+                        <div>
+                            <p class="text-xs font-bold tracking-widest uppercase text-accent-primary mb-1">Edit Profile</p>
+                            <h5 class="text-xl font-semibold text-light-text dark:text-white" th:text="${customer.name != null ? customer.name : 'Customer'}">Customer Name</h5>
+                            <span class="text-xs font-bold tracking-widest text-accent-secondary/80" th:text="${customer.customerCode}">CUST-10001</span>
+                        </div>
+                    </div>
+                    <!-- Close button -->
+                    <button type="button" th:onclick="'closeModal(\\'editCustomerModal' + ${customer.id} + '\\')';"
+                            class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 flex items-center justify-center text-light-text dark:text-white transition-colors">
+                        <i class="bi bi-x-lg text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Info pills row (readonly info) -->
+                <div class="flex gap-3 px-6 py-4 border-b border-black/5 dark:border-white/5">
+                    <div class="flex-1 bg-black/[0.03] dark:bg-white/[0.04] rounded-xl px-4 py-3 text-center">
+                        <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">Code</p>
+                        <p class="text-xs font-bold text-accent-primary tracking-widest" th:text="${customer.customerCode}">CUST-10001</p>
+                    </div>
+                    <div class="flex-1 bg-black/[0.03] dark:bg-white/[0.04] rounded-xl px-4 py-3 text-center">
+                        <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">Username</p>
+                        <p class="text-xs font-medium text-light-text dark:text-white" th:text="${'@' + customer.username}">@user</p>
+                    </div>
+                </div>
+
+                <!-- Editable form fields -->
+                <form th:action="@{/sales/customers/update}" method="post">
+                    <input type="hidden" name="id" th:value="${customer.id}">
+                    <div class="p-6 space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">
+                                <i class="bi bi-person me-1"></i>Full Name
+                            </label>
+                            <input type="text" name="name" th:value="${customer.name}" required
+                                   class="w-full bg-black/[0.03] dark:bg-white/[0.04] border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder-gray-400"
+                                   placeholder="Enter full name">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">
+                                <i class="bi bi-envelope me-1"></i>Email Address
+                            </label>
+                            <input type="email" name="email" th:value="${customer.email}" required
+                                   class="w-full bg-black/[0.03] dark:bg-white/[0.04] border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder-gray-400"
+                                   placeholder="Enter email address">
+                        </div>
+                    </div>
+                    <div class="px-6 pb-6 flex gap-3">
+                        <button type="button" th:onclick="'closeModal(\\'editCustomerModal' + ${customer.id} + '\\')';"
+                                class="flex-1 px-6 py-3 rounded-xl text-xs font-bold tracking-widest uppercase text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-black/10 dark:border-white/10">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="flex-1 bg-accent-primary text-white rounded-xl px-6 py-3 font-bold tracking-widest uppercase text-xs hover:bg-accent-primaryHover hover:-translate-y-0.5 hover:shadow-glow transition-all duration-200 flex items-center justify-center gap-2">
+                            <i class="bi bi-check2"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<!-- Modal Logic -->
+<script>
+    function openModal(id) {
+        const el = document.getElementById(id);
+        el.classList.remove('hidden');
+        el.classList.add('modal-entering');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+            el.classList.remove('modal-entering');
+        });
+    }
+    function openEditModal(id) {
+        openModal('editCustomerModal' + id);
+    }
+    function closeModal(id) {
+        const el = document.getElementById(id);
+        el.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    function handleBackdropClick(event, modalId) {
+        if (event.target === event.currentTarget) {
+            closeModal(modalId);
+        }
+    }
+</script>
+
+<style>
+    .modal-overlay .modal-card {
+        animation: modalIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .modal-overlay.hidden .modal-card {
+        animation: none;
+    }
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.93) translateY(16px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+</style>
+</body>
+</html>
+
+
+
+

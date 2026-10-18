@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Manage Products')}"></head>
+<body class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-white transition-colors duration-400 font-sans min-h-screen">
+
+<div th:replace="~{fragments/layout :: sidebar('products', 'Sales Manager')}"></div>
+
+<main class="pt-[150px] pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-end mb-8 border-b border-black/10 dark:border-white/10 pb-4 gap-4">
+        <div>
+            <span class="inline-block bg-status-success/10 text-status-success text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3">Sales Portal</span>
+            <h1 class="text-3xl font-light tracking-tight uppercase">Product Catalog & BOM</h1>
+            <p class="text-gray-500 text-sm mt-1 tracking-widest uppercase">Manage Items, Costing & Margins</p>
+        </div>
+        <button onclick="openModal('addProductModal')" class="bg-light-text dark:bg-white text-white dark:text-black rounded-full px-6 py-3 font-bold tracking-widest uppercase text-xs hover:-translate-y-1 hover:shadow-glow dark:hover:bg-gray-100 transition-all duration-300 flex items-center">
+            <i class="bi bi-plus-lg me-2"></i> Add New Product
+        </button>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${param.success}" class="mb-6 p-4 rounded-xl bg-green-100/50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-check2-circle me-2 text-lg"></i> Product updated successfully.
+    </div>
+    <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-100/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium tracking-wide flex items-center">
+        <i class="bi bi-exclamation-octagon me-2 text-lg"></i> <span th:text="${error}"></span>
+    </div>
+
+    <!-- Product Matrix -->
+    <div class="bg-white dark:bg-dark-card/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-soft dark:shadow-none overflow-hidden flex-1 flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                    <tr>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">ID</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Product</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs">Variants</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-right">Selling Price</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-center">BOM Costing</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-right">Net Margin</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-center">Stock</th>
+                        <th class="py-4 px-6 font-medium tracking-widest uppercase text-xs text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                    <tr th:each="product : ${products}" class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                        <!-- ID -->
+                        <td class="py-4 px-6 font-bold text-accent-primary tracking-widest" th:text="${product.id}">1</td>
+                        
+                        <!-- Product Info (Image + Name + Category) -->
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center overflow-hidden shrink-0 border border-black/5 dark:border-white/10">
+                                    <img th:src="${product.displayImage}" alt="Product" class="w-full h-full object-cover" loading="lazy">
+                                </div>
+                                <div>
+                                    <h6 class="font-bold text-light-text dark:text-white uppercase tracking-wider" th:text="${product.name}">Polo T-Shirt</h6>
+                                    <p class="text-xs text-gray-500 uppercase tracking-widest mt-1" th:text="${product.category}">Men</p>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Variants -->
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-black/5 dark:bg-white/10 px-2 py-1 rounded text-xs tracking-widest uppercase" th:text="${product.size}">L</span>
+                                <span class="text-xs text-gray-500 tracking-widest uppercase" th:text="${product.colour}">Navy Blue</span>
+                            </div>
+                        </td>
+                        
+                        <!-- Selling Price -->
+                        <td class="py-4 px-6 text-right">
+                            <span class="font-bold text-light-text dark:text-white text-base" th:text="${'LKR ' + #numbers.formatDecimal(product.price, 1, 2)}">LKR 1200.00</span>
+                        </td>
+                        
+                        <!-- BOM Costing -->
+                        <td class="py-4 px-6 text-center">
+                            <span class="text-gray-600 dark:text-gray-300 font-medium" th:text="${'LKR ' + #numbers.formatDecimal(product.totalBOMCost, 1, 2)}">LKR 800.00</span>
+                            <div class="text-[10px] text-gray-400 uppercase tracking-widest mt-1" th:text="${'F:' + product.fabricCost + ' L:' + product.laborCost + ' O:' + product.overheadCost}">F:400 L:250 O:150</div>
+                        </td>
+                        
+                        <!-- Margin -->
+                        <td class="py-4 px-6 text-right">
+                            <span class="inline-block bg-status-success/10 text-status-success border border-status-success/20 text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full" th:text="${'LKR ' + #numbers.formatDecimal(product.netMargin, 1, 2)}">LKR 400.00</span>
+                        </td>
+                        
+                        <!-- Stock -->
+                        <td class="py-4 px-6 text-center">
+                            <span class="font-bold text-lg" th:classappend="${product.stockQuantity > 0 ? 'text-accent-secondary' : 'text-status-danger'}" th:text="${product.stockQuantity}">100</span>
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td class="py-4 px-6 text-right space-x-2">
+                            <button type="button" th:onclick="'openModal(\'editProductModal' + ${product.id} + '\')'" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent-primary/10 text-accent-primary hover:bg-accent-primary hover:text-white transition-colors" title="Edit Product">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <a th:href="@{/sales/products/delete/{id}(id=${product.id})}" data-confirm="Delete this product?" class="delete-btn delete-btn--sm" title="Delete Product">
+                                <div class="trash-wrapper">
+                                    <svg class="trash-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g class="trash-lid">
+                                            <path d="M9 4.5C9 4.22386 9.22386 4 9.5 4H14.5C14.7761 4 15 4.22386 15 4.5V5.5H9V4.5Z" fill="currentColor"/>
+                                            <path d="M4 5.75C4 5.33579 4.33579 5 4.75 5H19.25C19.6642 5 20 5.33579 20 5.75C20 6.16421 19.6642 6.5 19.25 6.5H4.75C4.33579 6.5 4 6.16421 4 5.75Z" fill="currentColor"/>
+                                        </g>
+                                        <defs>
+                                            <clipPath th:id="'trashClipProd_' + ${product.id}">
+                                                <path d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z"/>
+                                            </clipPath>
+                                        </defs>
+                                        <g th:attr="clip-path='url(#trashClipProd_' + ${product.id} + ')'">
+                                            <rect class="trash-liquid" x="4" y="7" width="16" height="16"/>
+                                        </g>
+                                        <path class="trash-body" d="M5.8 7.5L7 20.2C7.08 21.1 7.84 21.8 8.74 21.8H15.26C16.16 21.8 16.92 21.1 17 20.2L18.2 7.5H5.8Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                        <path class="trash-line" d="M9.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                        <path class="trash-line" d="M12 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                        <path class="trash-line" d="M14.5 10.5V18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+                                    </svg>
+                                </div>
+                                <div class="text-wrapper">
+                                    <span class="letter" style="--fly-dist: 36px">D</span>
+                                    <span class="letter" style="--fly-dist: 46px">e</span>
+                                    <span class="letter" style="--fly-dist: 56px">l</span>
+                                    <span class="letter" style="--fly-dist: 66px">e</span>
+                                    <span class="letter" style="--fly-dist: 76px">t</span>
+                                    <span class="letter" style="--fly-dist: 86px">e</span>
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Empty State -->
+                    <tr th:if="${#lists.isEmpty(products)}">
+                        <td colspan="8" class="py-16 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                                <i class="bi bi-tags text-4xl mb-3 opacity-50"></i>
+                                <p class="text-sm font-light tracking-widest uppercase">No products in catalog.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Global Add Product Modal -->
+<div id="addProductModal" class="fixed inset-0 z-[1060] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-black/10 dark:border-white/10 flex justify-between items-center">
+            <h5 class="text-lg font-light uppercase tracking-widest text-light-text dark:text-white">Add New Polo & BOM</h5>
+            <button onclick="closeModal('addProductModal')" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
+            <form th:action="@{/sales/products/add}" method="post" enctype="multipart/form-data" id="addProductForm" class="flex flex-col h-full">
+                <div class="p-6 space-y-6 flex-1">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Product Name</label>
+                                <input type="text" name="name" required value="Classic Polo T-Shirt" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Category</label>
+                                    <select name="category" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                        <option value="Men">Men</option>
+                                        <option value="Women">Women</option>
+                                        <option value="Children">Children</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Size</label>
+                                    <select name="size" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                        <option value="XS">XS</option>
+                                        <option value="S">S</option>
+                                        <option value="M">M</option>
+                                        <option value="L">L</option>
+                                        <option value="XL">XL</option>
+                                        <option value="2XL">2XL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Color</label>
+                                    <div class="relative flex items-center">
+                                        <select name="colour" id="addColourSelect" required class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                            <option value="Navy Blue" selected>Navy Blue</option>
+                                            <option value="Black">Black</option>
+                                            <option value="White">White</option>
+                                            <option value="Red">Red</option>
+                                            <option value="Blue">Blue</option>
+                                            <option value="Green">Green</option>
+                                            <option value="Yellow">Yellow</option>
+                                            <option value="Pink">Pink</option>
+                                            <option value="Heather Grey">Heather Grey</option>
+                                            <option value="Orange">Orange</option>
+                                        </select>
+                                        <div class="absolute right-3.5 pointer-events-none text-gray-400 text-xs">
+                                            <i class="bi bi-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Initial Stock</label>
+                                    <input type="number" name="stockQuantity" required value="100" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Costing & Pricing -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-elegant-highlight mb-4 border-b border-black/5 dark:border-white/5 pb-2">BOM Costing & Selling Price</h6>
+                        <div class="grid grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Fabric Cost (LKR)</label>
+                                <input type="number" name="fabricCost" required step="0.01" value="400.00" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Labor Cost (LKR)</label>
+                                <input type="number" name="laborCost" required step="0.01" value="250.00" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Overhead (LKR)</label>
+                                <input type="number" name="overheadCost" required step="0.01" value="150.00" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold tracking-widest uppercase text-elegant-highlight mb-2">Final Selling Price (LKR)</label>
+                            <input type="number" name="price" required step="0.01" value="1200.00" class="w-full bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all dark:bg-elegant-highlight dark:border-emerald-500/20">
+                        </div>
+                    </div>
+
+
+
+                </div>
+                <div class="p-6 border-t border-black/10 dark:border-white/10 flex justify-end gap-3 bg-gray-50/50 dark:bg-white/5 rounded-b-3xl mt-auto">
+                    <button type="button" onclick="closeModal('addProductModal')" class="px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-gray-300 dark:border-transparent">Cancel</button>
+                    <button type="submit" class="bg-emerald-500 text-white rounded-full px-6 py-2 font-bold tracking-widest uppercase text-xs hover:bg-emerald-600 transition-colors shadow-lg">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Edit Product Modals -->
+<div th:each="product : ${products}" th:id="'editProductModal' + ${product.id}" class="fixed inset-0 z-[1060] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-dark-card border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-black/10 dark:border-white/10 flex justify-between items-center">
+            <h5 class="text-lg font-light uppercase tracking-widest text-light-text dark:text-white">Edit Polo & BOM</h5>
+            <button th:onclick="'closeModal(\'editProductModal' + ${product.id} + '\')'" class="text-gray-400 hover:text-light-text dark:hover:text-white transition-colors">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
+            <form th:action="@{/sales/products/update}" method="post" enctype="multipart/form-data" th:id="'editProductForm' + ${product.id}" class="flex flex-col h-full">
+                <div class="p-6 space-y-6 flex-1">
+                    <input type="hidden" name="id" th:value="${product.id}" />
+                    
+                    <!-- Basic Info -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-elegant-highlight mb-4 border-b border-black/5 dark:border-white/5 pb-2">Basic Info</h6>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Product Name</label>
+                                <input type="text" name="name" required th:value="${product.name}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Category</label>
+                                    <select name="category" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                        <option value="Men" th:selected="${product.category == 'Men'}">Men</option>
+                                        <option value="Women" th:selected="${product.category == 'Women'}">Women</option>
+                                        <option value="Children" th:selected="${product.category == 'Children'}">Children</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Size</label>
+                                    <select name="size" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                        <option value="XS" th:selected="${product.size == 'XS'}">XS</option>
+                                        <option value="S" th:selected="${product.size == 'S'}">S</option>
+                                        <option value="M" th:selected="${product.size == 'M'}">M</option>
+                                        <option value="L" th:selected="${product.size == 'L'}">L</option>
+                                        <option value="XL" th:selected="${product.size == 'XL'}">XL</option>
+                                        <option value="2XL" th:selected="${product.size == '2XL'}">2XL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Color</label>
+                                    <div class="relative flex items-center">
+                                        <select name="colour" th:id="'editColourSelect' + ${product.id}" required class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none cursor-pointer">
+                                            <option value="Navy Blue" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Navy Blue')}">Navy Blue</option>
+                                            <option value="Black" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Black')}">Black</option>
+                                            <option value="White" th:selected="${#strings.equalsIgnoreCase(product.colour, 'White')}">White</option>
+                                            <option value="Red" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Red')}">Red</option>
+                                            <option value="Blue" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Blue')}">Blue</option>
+                                            <option value="Green" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Green')}">Green</option>
+                                            <option value="Yellow" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Yellow')}">Yellow</option>
+                                            <option value="Pink" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Pink')}">Pink</option>
+                                            <option value="Heather Grey" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Heather Grey')}">Heather Grey</option>
+                                            <option value="Orange" th:selected="${#strings.equalsIgnoreCase(product.colour, 'Orange')}">Orange</option>
+                                        </select>
+                                        <div class="absolute right-3.5 pointer-events-none text-gray-400 text-xs">
+                                            <i class="bi bi-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Current Stock</label>
+                                    <input type="number" name="stockQuantity" required th:value="${product.stockQuantity}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Costing & Pricing -->
+                    <div>
+                        <h6 class="text-xs font-bold tracking-widest uppercase text-elegant-highlight mb-4 border-b border-black/5 dark:border-white/5 pb-2">BOM Costing & Selling Price</h6>
+                        <div class="grid grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Fabric Cost (LKR)</label>
+                                <input type="number" name="fabricCost" required step="0.01" th:value="${product.fabricCost}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Labor Cost (LKR)</label>
+                                <input type="number" name="laborCost" required step="0.01" th:value="${product.laborCost}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-2">Overhead (LKR)</label>
+                                <input type="number" name="overheadCost" required step="0.01" th:value="${product.overheadCost}" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold tracking-widest uppercase text-elegant-highlight mb-2">Final Selling Price (LKR)</label>
+                            <input type="number" name="price" required step="0.01" th:value="${product.price}" class="w-full bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-light-text dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all dark:bg-elegant-highlight dark:border-emerald-500/20">
+                        </div>
+                    </div>
+
+
+
+                </div>
+                <div class="p-6 border-t border-black/10 dark:border-white/10 flex justify-end gap-3 bg-gray-50/50 dark:bg-white/5 rounded-b-3xl mt-auto">
+                    <button type="button" th:onclick="'closeModal(\'editProductModal' + ${product.id} + '\')'" class="px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-gray-300 dark:border-transparent">Cancel</button>
+                    <button type="submit" class="bg-emerald-500 text-white rounded-full px-6 py-2 font-bold tracking-widest uppercase text-xs hover:bg-emerald-600 transition-colors shadow-lg">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<!-- Modal Logic -->
+<script>
+
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    // Close on backdrop click
+    window.onclick = function(event) {
+        if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {
+            event.target.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+</script>
+</body>
+</html>
+
+
+
+
